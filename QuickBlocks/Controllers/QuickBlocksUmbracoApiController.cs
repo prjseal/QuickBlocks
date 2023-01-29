@@ -32,6 +32,8 @@ namespace QuickBlocks.Controllers
                     _blockParsingService.CreateRow(row);
                 }
             }
+
+            _blockParsingService.CreateDataType("Paul Test");
             return rows;
         }
     }

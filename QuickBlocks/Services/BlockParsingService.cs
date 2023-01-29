@@ -9,6 +9,8 @@ using QuickBlocks.Models;
 using Umbraco.Cms.Core.Mapping;
 using Umbraco.Cms.Core.Models;
 using Umbraco.Cms.Core.Models.ContentEditing;
+using Umbraco.Cms.Core.PropertyEditors;
+using Umbraco.Cms.Core.Serialization;
 using Umbraco.Cms.Core.Services;
 using File = System.IO.File;
 
@@ -20,13 +22,17 @@ namespace QuickBlocks.Services
         private readonly IWebHostEnvironment _webHostEnvironment;
         private readonly IDataTypeService _dataTypeService;
         private readonly IUmbracoMapper _umbracoMapper;
+        private readonly IDataValueEditorFactory _dataValueEditorFactory;
+        private readonly IConfigurationEditorJsonSerializer _configurationEditorJsonSerializer;
 
-        public BlockParsingService(IShortStringHelper shortStringHelper, IWebHostEnvironment webHostEnvironment, IDataTypeService dataTypeService, IUmbracoMapper umbracoMapper)
+        public BlockParsingService(IShortStringHelper shortStringHelper, IWebHostEnvironment webHostEnvironment, IDataTypeService dataTypeService, IUmbracoMapper umbracoMapper, IDataValueEditorFactory dataValueEditorFactory, IConfigurationEditorJsonSerializer configurationEditorJsonSerializer)
         {
             _shortStringHelper = shortStringHelper;
             _webHostEnvironment = webHostEnvironment;
             _dataTypeService = dataTypeService;
             _umbracoMapper = umbracoMapper;
+            _dataValueEditorFactory = dataValueEditorFactory;
+            _configurationEditorJsonSerializer = configurationEditorJsonSerializer;
         }
 
         public List<RowModel> GetRows(HtmlNode node)
@@ -141,8 +147,19 @@ namespace QuickBlocks.Services
 
         public bool CreateDataType(string name)
         {
-            //var dataType = _dataTypeService.GetDataType(name);
-            //DataTypeDisplay? dt = dataType == null ? null : _umbracoMapper.Map<IDataType, DataTypeDisplay>(dataType);
+            var dataType = _dataTypeService.GetDataType(name);
+            DataTypeDisplay? dt = dataType == null ? null : _umbracoMapper.Map<IDataType, DataTypeDisplay>(dataType);
+
+            if (dt != null) return true;
+
+            var editor = new DataEditor(_dataValueEditorFactory);
+            editor.Alias = "Umbraco.BlockList";
+
+            var newDataType = new DataType(editor, _configurationEditorJsonSerializer);
+
+            newDataType.Name = name;
+
+            _dataTypeService.Save(newDataType);
 
             //var dataType = 
 
