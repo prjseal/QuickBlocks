@@ -33,7 +33,7 @@ namespace QuickBlocks.Controllers
                 }
             }
 
-            _blockParsingService.CreateDataType("Paul Test");
+            _blockParsingService.CreateDataType("[BlockList] Main Content", rows);
             return rows;
         }
     }

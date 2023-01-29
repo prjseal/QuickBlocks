@@ -10,6 +10,6 @@ namespace QuickBlocks.Services
         List<BlockItemModel> GetBlocks(HtmlNode node, string rowName);
         List<PropertyModel> GetProperties(HtmlNode node);
         bool CreateRow(RowModel row);
-        void CreateDataType(string name);
+        void CreateDataType(string name, IEnumerable<RowModel> rows);
     }
 }

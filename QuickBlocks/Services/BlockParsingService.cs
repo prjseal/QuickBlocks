@@ -153,48 +153,63 @@ namespace QuickBlocks.Services
 
         public void CreateDataType(string name, IEnumerable<RowModel> rows)
         {
-            foreach(var row in rows)
+
+
+            var editor = _propertyEditorCollection.First(x => x.Alias == "Umbraco.BlockList");
+
+            var blocks = new List<BlockListConfiguration.BlockConfiguration>();
+
+            foreach (var row in rows)
             {
                 var contentDocType = _contentTypeService.Get(row.Alias);
-                if(contentDocType == null)
+                if (contentDocType == null)
                 {
                     var contentType = new ContentType(_shortStringHelper, -1);
-                    contentType.Name = row.Name;
+                    contentType.Name = row.Name + " Row";
                     contentType.Alias = row.Alias;
-                    contentDocType = contentType;
+                    contentType.IsElement = true;
+                    contentType.IsContainer = false;
+                    contentType.Icon = "icon-science";
+                    _contentTypeService.Save(contentType);
+                    contentDocType = _contentTypeService.Get(row.Alias);
                 }
 
                 var settingsDocType = _contentTypeService.Get(row.Alias + "Settings");
                 if (settingsDocType == null)
                 {
                     var contentType = new ContentType(_shortStringHelper, -1);
-                    contentType.Name = row.Name;
-                    contentType.Alias = row.Alias;
-                    settingsDocType = contentType;
+                    contentType.Name = row.Name + " Row" + " Settings";
+                    contentType.Alias = row.Alias + "Settings";
+                    contentType.IsElement = true;
+                    contentType.IsContainer = false;
+                    contentType.Icon = "icon-science";
+                    _contentTypeService.Save(contentType);
+                    settingsDocType = _contentTypeService.Get(row.Alias + "Settings");
+                }
+
+                if (contentDocType != null)
+                {
+                    blocks.Add(new BlockListConfiguration.BlockConfiguration
+                    {
+                        ContentElementTypeKey = contentDocType.Key,
+                        SettingsElementTypeKey = settingsDocType?.Key ?? null,
+                        Label = "{{ !$title || $title == '' ? '" + row.Name + " ' + $index : $title }}",
+                        EditorSize = "medium",
+                        ForceHideContentEditorInOverlay = false,
+                        Stylesheet = null,
+                        View = null,
+                        IconColor = "#ffffff",
+                        BackgroundColor = "#1b264f"
+                    });
                 }
             }
 
-            var editor = _propertyEditorCollection.First(x => x.Alias == "Umbraco.BlockList");
             var newDataType = new DataType(editor, _configurationEditorJsonSerializer)
             {
                 Name = name,
                 Configuration = new BlockListConfiguration
                 {
-                    Blocks = new[]
-                    {
-                        new BlockListConfiguration.BlockConfiguration
-                        {
-                            ContentElementTypeKey = textRow.Key,
-                            SettingsElementTypeKey = textRowSettings.Key,
-                            Label = "{{ !$title || $title == '' ? 'Test ' + $index : $title }}",
-                            EditorSize = "medium",
-                            ForceHideContentEditorInOverlay = false,
-                            Stylesheet = null,
-                            View = null,
-                            IconColor = "#ffffff",
-                            BackgroundColor = "#1b264f"
-                        },
-                    },
+                    Blocks = blocks.ToArray(),
                     MaxPropertyWidth = "100%",
                     UseSingleBlockMode = false,
                     UseLiveEditing = false,
