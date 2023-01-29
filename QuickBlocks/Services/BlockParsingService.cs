@@ -158,6 +158,39 @@ namespace QuickBlocks.Services
             var newDataType = new DataType(editor, _configurationEditorJsonSerializer);
 
             newDataType.Name = name;
+            //var config = new Dictionary<string, object>();
+
+            
+
+            var config = new DataTypeConfigurationFieldDisplay();
+            config.
+
+            //var blockObject = new Dictionary<string, object>();
+            //blockObject.Add("contentElementTypeKey", "9bd86554-8001-4a6b-b15a-1b3a5defe24b");
+            //blockObject.Add("settingsElementTypeKey", null);
+            //blockObject.Add("labelTemplate", "");
+            //blockObject.Add("view", null);
+            //blockObject.Add("stylesheet", null);
+            //blockObject.Add("editorSize", "medium");
+            //blockObject.Add("iconColor", null);
+            //blockObject.Add("backgroundColor", null);
+            //blockObject.Add("thumbnail", null);
+
+            //config.Add("blocks", blockObject);
+
+            //var validationLimit = new Dictionary<string, object>();
+            //validationLimit.Add("min", null);
+            //validationLimit.Add("max", null);
+
+            //config.Add("validationLimit", validationLimit);
+            //config.Add("useSingleBlockMode", false);
+            //config.Add("useLiveEditing", false);
+            //config.Add("useInlineEditingAsDefault", false);
+            //config.Add("maxPropertyWidth", null);
+
+            newDataType.Configuration = config;
+
+
 
             _dataTypeService.Save(newDataType);
 
