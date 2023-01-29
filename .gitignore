@@ -24,3 +24,8 @@
 
 # Ignore the Models Builder models out of date flag
 **/App_Data/Models/ood.flag
+/.vs/QuickBlocks
+/QuickBlocks/bin/Debug/net6.0
+/QuickBlocks/obj
+/QuickBlocks.Site/Views/Partials/blocklist/Components
+/QuickBlocks.Site/App_Plugins/QuickBlocks

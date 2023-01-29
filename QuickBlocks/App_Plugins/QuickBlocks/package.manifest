@@ -1,0 +1,17 @@
+﻿{
+  "name": "QuickBlocks",
+  "version": "1.0.0",
+  "allowPackageTelemetry": true,
+  "dashboards": [
+    {
+      "alias": "quickBlocks",
+      "view": "/App_Plugins/QuickBlocks/quickBlocks.html",
+      "sections": [ "settings" ],
+      "weight": -10,
+      "access": [
+        { "deny": "translator" },
+        { "grant": "admin" }
+      ]
+    }
+  ]
+}
