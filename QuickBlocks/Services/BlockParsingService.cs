@@ -14,6 +14,7 @@ using Umbraco.Cms.Core.Serialization;
 using Umbraco.Cms.Core.Services;
 using File = System.IO.File;
 using System.Data;
+using System.Text.Json;
 
 namespace QuickBlocks.Services
 {
@@ -25,8 +26,10 @@ namespace QuickBlocks.Services
         private readonly IUmbracoMapper _umbracoMapper;
         private readonly IDataValueEditorFactory _dataValueEditorFactory;
         private readonly IConfigurationEditorJsonSerializer _configurationEditorJsonSerializer;
+        private readonly PropertyEditorCollection _propertyEditorCollection;
+        private readonly IContentTypeService _contentTypeService;
 
-        public BlockParsingService(IShortStringHelper shortStringHelper, IWebHostEnvironment webHostEnvironment, IDataTypeService dataTypeService, IUmbracoMapper umbracoMapper, IDataValueEditorFactory dataValueEditorFactory, IConfigurationEditorJsonSerializer configurationEditorJsonSerializer)
+        public BlockParsingService(IShortStringHelper shortStringHelper, IWebHostEnvironment webHostEnvironment, IDataTypeService dataTypeService, IUmbracoMapper umbracoMapper, IDataValueEditorFactory dataValueEditorFactory, IConfigurationEditorJsonSerializer configurationEditorJsonSerializer, PropertyEditorCollection propertyEditorCollection, IContentTypeService contentTypeService)
         {
             _shortStringHelper = shortStringHelper;
             _webHostEnvironment = webHostEnvironment;
@@ -34,6 +37,8 @@ namespace QuickBlocks.Services
             _umbracoMapper = umbracoMapper;
             _dataValueEditorFactory = dataValueEditorFactory;
             _configurationEditorJsonSerializer = configurationEditorJsonSerializer;
+            _propertyEditorCollection = propertyEditorCollection;
+            _contentTypeService = contentTypeService;
         }
 
         public List<RowModel> GetRows(HtmlNode node)
@@ -146,88 +151,46 @@ namespace QuickBlocks.Services
             return true; ;
         }
 
-        public bool CreateDataType(string name)
+        public void CreateDataType(string name)
         {
-            var dataType = _dataTypeService.GetDataType(name + DateTime.Now.ToString("ddMMyy hhmmss"));
-            DataTypeDisplay? dt = dataType == null ? null : _umbracoMapper.Map<IDataType, DataTypeDisplay>(dataType);
+            var textRow = _contentTypeService.Get("textRow");
+            var textRowSettings = _contentTypeService.Get("textRowSettings");
 
-            if (dt != null) return true;
 
-            var editor = new DataEditor(_dataValueEditorFactory);
-            editor.Alias = "Umbraco.BlockList";
-
-            var newDataType = new DataType(editor, _configurationEditorJsonSerializer);
-
-            newDataType.Name = name;
-            //var config = new Dictionary<string, object>();
-
-            var config = new BlockListConfiguration();
-            config.MaxPropertyWidth = "100%";
-            config.UseSingleBlockMode= true;
-            config.UseLiveEditing= true;
-            config.UseInlineEditingAsDefault= false;
-            config.ValidationLimit = new BlockListConfiguration.NumberRange()
+            var editor = _propertyEditorCollection.First(x => x.Alias == "Umbraco.BlockList");
+            var newDataType = new DataType(editor, _configurationEditorJsonSerializer)
             {
-                Min = 0,
-                Max = 100
+                Name = name,
+                Configuration = new BlockListConfiguration
+                {
+                    Blocks = new[]
+            {
+                new BlockListConfiguration.BlockConfiguration
+                {
+                    ContentElementTypeKey = textRow.Key,
+                    SettingsElementTypeKey = textRowSettings.Key,
+                    Label = "{{ !$title || $title == '' ? 'Test ' + $index : $title }}",
+                    EditorSize = "medium",
+                    ForceHideContentEditorInOverlay = false,
+                    Stylesheet = "",
+                    View = "",
+                    IconColor = "#ffffff",
+                    BackgroundColor = "#1b264f"
+                },
+            },
+                    MaxPropertyWidth = "100%",
+                    UseSingleBlockMode = false,
+                    UseLiveEditing = false,
+                    UseInlineEditingAsDefault = false,
+                    ValidationLimit = new BlockListConfiguration.NumberRange()
+                    {
+                        Min = 0,
+                        Max = 10
+                    }
+                }
             };
 
-            var blocks = new List<BlockListConfiguration.BlockConfiguration>();
-
-
-            var block = new BlockListConfiguration.BlockConfiguration();
-            block.Label = "{{ !$title || $title == '' ? 'Image Link ' + $index : $title }} {{$settings.hide ? '[HIDDEN]' : ''}}";
-            block.EditorSize = "medium";
-            block.ForceHideContentEditorInOverlay = true;
-            block.Stylesheet = "~/App_Plugins/QuickBlocks/quickBlocks.css";
-            block.View = "~/App_Plugins/QuickBlocks/quickBlocks.html";
-            block.ContentElementTypeKey = new Guid("08e05150-1fe7-4810-96d2-cc0b9fd77a40");
-            block.SettingsElementTypeKey = new Guid("55876948-ac8b-440f-bbca-19ac2bb18189");
-            block.IconColor = "#ffffff";
-            block.BackgroundColor = "#1b264f";
-
-            blocks.Add(block);
-
-            config.Blocks = blocks.ToArray();
-
-            newDataType.Configuration = config;
-
-            //var config = new DataTypeConfigurationFieldDisplay();
-            //config.
-
-            //var blockObject = new Dictionary<string, object>();
-            //blockObject.Add("contentElementTypeKey", "9bd86554-8001-4a6b-b15a-1b3a5defe24b");
-            //blockObject.Add("settingsElementTypeKey", null);
-            //blockObject.Add("labelTemplate", "");
-            //blockObject.Add("view", null);
-            //blockObject.Add("stylesheet", null);
-            //blockObject.Add("editorSize", "medium");
-            //blockObject.Add("iconColor", null);
-            //blockObject.Add("backgroundColor", null);
-            //blockObject.Add("thumbnail", null);
-
-            //config.Add("blocks", blockObject);
-
-            //var validationLimit = new Dictionary<string, object>();
-            //validationLimit.Add("min", null);
-            //validationLimit.Add("max", null);
-
-            //config.Add("validationLimit", validationLimit);
-            //config.Add("useSingleBlockMode", false);
-            //config.Add("useLiveEditing", false);
-            //config.Add("useInlineEditingAsDefault", false);
-            //config.Add("maxPropertyWidth", null);
-
-            //newDataType.Configuration = config;
-
-
-
             _dataTypeService.Save(newDataType);
-
-            //var dataType = 
-
-            //_dataTypeService.Save();
-            return false;
         }
     }
 }
