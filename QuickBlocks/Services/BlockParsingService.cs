@@ -151,11 +151,28 @@ namespace QuickBlocks.Services
             return true; ;
         }
 
-        public void CreateDataType(string name)
+        public void CreateDataType(string name, IEnumerable<RowModel> rows)
         {
-            var textRow = _contentTypeService.Get("textRow");
-            var textRowSettings = _contentTypeService.Get("textRowSettings");
+            foreach(var row in rows)
+            {
+                var contentDocType = _contentTypeService.Get(row.Alias);
+                if(contentDocType == null)
+                {
+                    var contentType = new ContentType(_shortStringHelper, -1);
+                    contentType.Name = row.Name;
+                    contentType.Alias = row.Alias;
+                    contentDocType = contentType;
+                }
 
+                var settingsDocType = _contentTypeService.Get(row.Alias + "Settings");
+                if (settingsDocType == null)
+                {
+                    var contentType = new ContentType(_shortStringHelper, -1);
+                    contentType.Name = row.Name;
+                    contentType.Alias = row.Alias;
+                    settingsDocType = contentType;
+                }
+            }
 
             var editor = _propertyEditorCollection.First(x => x.Alias == "Umbraco.BlockList");
             var newDataType = new DataType(editor, _configurationEditorJsonSerializer)
@@ -164,20 +181,20 @@ namespace QuickBlocks.Services
                 Configuration = new BlockListConfiguration
                 {
                     Blocks = new[]
-            {
-                new BlockListConfiguration.BlockConfiguration
-                {
-                    ContentElementTypeKey = textRow.Key,
-                    SettingsElementTypeKey = textRowSettings.Key,
-                    Label = "{{ !$title || $title == '' ? 'Test ' + $index : $title }}",
-                    EditorSize = "medium",
-                    ForceHideContentEditorInOverlay = false,
-                    Stylesheet = "",
-                    View = "",
-                    IconColor = "#ffffff",
-                    BackgroundColor = "#1b264f"
-                },
-            },
+                    {
+                        new BlockListConfiguration.BlockConfiguration
+                        {
+                            ContentElementTypeKey = textRow.Key,
+                            SettingsElementTypeKey = textRowSettings.Key,
+                            Label = "{{ !$title || $title == '' ? 'Test ' + $index : $title }}",
+                            EditorSize = "medium",
+                            ForceHideContentEditorInOverlay = false,
+                            Stylesheet = null,
+                            View = null,
+                            IconColor = "#ffffff",
+                            BackgroundColor = "#1b264f"
+                        },
+                    },
                     MaxPropertyWidth = "100%",
                     UseSingleBlockMode = false,
                     UseLiveEditing = false,
