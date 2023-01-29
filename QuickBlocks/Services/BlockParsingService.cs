@@ -13,6 +13,7 @@ using Umbraco.Cms.Core.PropertyEditors;
 using Umbraco.Cms.Core.Serialization;
 using Umbraco.Cms.Core.Services;
 using File = System.IO.File;
+using System.Data;
 
 namespace QuickBlocks.Services
 {
@@ -147,7 +148,7 @@ namespace QuickBlocks.Services
 
         public bool CreateDataType(string name)
         {
-            var dataType = _dataTypeService.GetDataType(name);
+            var dataType = _dataTypeService.GetDataType(name + DateTime.Now.ToString("ddMMyy hhmmss"));
             DataTypeDisplay? dt = dataType == null ? null : _umbracoMapper.Map<IDataType, DataTypeDisplay>(dataType);
 
             if (dt != null) return true;
@@ -160,10 +161,39 @@ namespace QuickBlocks.Services
             newDataType.Name = name;
             //var config = new Dictionary<string, object>();
 
-            
+            var config = new BlockListConfiguration();
+            config.MaxPropertyWidth = "100%";
+            config.UseSingleBlockMode= true;
+            config.UseLiveEditing= true;
+            config.UseInlineEditingAsDefault= false;
+            config.ValidationLimit = new BlockListConfiguration.NumberRange()
+            {
+                Min = 0,
+                Max = 100
+            };
 
-            var config = new DataTypeConfigurationFieldDisplay();
-            config.
+            var blocks = new List<BlockListConfiguration.BlockConfiguration>();
+
+
+            var block = new BlockListConfiguration.BlockConfiguration();
+            block.Label = "{{ !$title || $title == '' ? 'Image Link ' + $index : $title }} {{$settings.hide ? '[HIDDEN]' : ''}}";
+            block.EditorSize = "medium";
+            block.ForceHideContentEditorInOverlay = true;
+            block.Stylesheet = "~/App_Plugins/QuickBlocks/quickBlocks.css";
+            block.View = "~/App_Plugins/QuickBlocks/quickBlocks.html";
+            block.ContentElementTypeKey = new Guid("08e05150-1fe7-4810-96d2-cc0b9fd77a40");
+            block.SettingsElementTypeKey = new Guid("55876948-ac8b-440f-bbca-19ac2bb18189");
+            block.IconColor = "#ffffff";
+            block.BackgroundColor = "#1b264f";
+
+            blocks.Add(block);
+
+            config.Blocks = blocks.ToArray();
+
+            newDataType.Configuration = config;
+
+            //var config = new DataTypeConfigurationFieldDisplay();
+            //config.
 
             //var blockObject = new Dictionary<string, object>();
             //blockObject.Add("contentElementTypeKey", "9bd86554-8001-4a6b-b15a-1b3a5defe24b");
@@ -188,7 +218,7 @@ namespace QuickBlocks.Services
             //config.Add("useInlineEditingAsDefault", false);
             //config.Add("maxPropertyWidth", null);
 
-            newDataType.Configuration = config;
+            //newDataType.Configuration = config;
 
 
 
