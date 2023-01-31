@@ -19,10 +19,11 @@ namespace QuickBlocks.Controllers
         }
 
         [HttpGet]
-        public IEnumerable<RowModel> Build(string url)
+        public IEnumerable<BlockListModel> Build(string url)
         {
             var doc = new HtmlDocument();
             doc.Load(url);
+            var lists = _blockParsingService.GetLists(doc.DocumentNode);
             var rows = _blockParsingService.GetRows(doc.DocumentNode);
 
             if (rows != null && rows.Any())
@@ -34,7 +35,7 @@ namespace QuickBlocks.Controllers
             }
 
             _blockParsingService.CreateDataType("[BlockList] Main Content", rows);
-            return rows;
+            return lists;
         }
     }
 }

@@ -30,4 +30,7 @@
   <ItemGroup>
     <ProjectReference Include="..\QuickBlocks\QuickBlocks.csproj" />
   </ItemGroup>
+  <ItemGroup>
+    <Folder Include="Views\Partials\blocklist\Components\" />
+  </ItemGroup>
 </Project>

@@ -41,6 +41,27 @@ namespace QuickBlocks.Services
             _contentTypeService = contentTypeService;
         }
 
+        public List<BlockListModel> GetLists(HtmlNode node)
+        {
+            var lists = new List<BlockListModel>();
+
+            var listNodes = node.SelectNodes("//*[@data-list-name]");
+
+            if (listNodes == null || !listNodes.Any()) return lists;
+
+            foreach (var listNode in listNodes)
+            {
+                var listName = listNode.GetAttributeValue("data-list-name", "");
+                var list = new BlockListModel(listName);
+                var rows = this.GetRows(listNode);
+                list.Rows = rows;
+
+                lists.Add(list);
+            }
+
+            return lists;
+        }
+
         public List<RowModel> GetRows(HtmlNode node)
         {
             var rows = new List<RowModel>();
