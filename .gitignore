@@ -30,3 +30,8 @@
 /QuickBlocks.Site/Views/Partials/blocklist/Components
 /QuickBlocks.Site/App_Plugins/QuickBlocks
 /.vs/ProjectEvaluation
+/.idea/.idea.QuickBlocks/.idea/.gitignore
+/.idea/.idea.QuickBlocks/.idea/encodings.xml
+/.idea/.idea.QuickBlocks/.idea/indexLayout.xml
+/.idea/.idea.QuickBlocks/.idea/vcs.xml
+/.idea/config/applicationhost.config

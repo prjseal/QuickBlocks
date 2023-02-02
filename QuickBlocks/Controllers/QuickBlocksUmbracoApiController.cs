@@ -24,17 +24,14 @@ namespace QuickBlocks.Controllers
             var doc = new HtmlDocument();
             doc.Load(url);
             var lists = _blockParsingService.GetLists(doc.DocumentNode);
-            var rows = _blockParsingService.GetRows(doc.DocumentNode);
 
-            if (rows != null && rows.Any())
+            if (lists == null || !lists.Any()) return lists;
+            
+            foreach (var list in lists)
             {
-                foreach (var row in rows)
-                {
-                    _blockParsingService.CreateRow(row);
-                }
+                _blockParsingService.CreateList(list);
             }
 
-            _blockParsingService.CreateDataType("[BlockList] Main Content", rows);
             return lists;
         }
     }

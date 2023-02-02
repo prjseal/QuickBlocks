@@ -29,7 +29,11 @@ namespace QuickBlocks.Services
         private readonly PropertyEditorCollection _propertyEditorCollection;
         private readonly IContentTypeService _contentTypeService;
 
-        public BlockParsingService(IShortStringHelper shortStringHelper, IWebHostEnvironment webHostEnvironment, IDataTypeService dataTypeService, IUmbracoMapper umbracoMapper, IDataValueEditorFactory dataValueEditorFactory, IConfigurationEditorJsonSerializer configurationEditorJsonSerializer, PropertyEditorCollection propertyEditorCollection, IContentTypeService contentTypeService)
+        public BlockParsingService(IShortStringHelper shortStringHelper, IWebHostEnvironment webHostEnvironment,
+            IDataTypeService dataTypeService, IUmbracoMapper umbracoMapper,
+            IDataValueEditorFactory dataValueEditorFactory,
+            IConfigurationEditorJsonSerializer configurationEditorJsonSerializer,
+            PropertyEditorCollection propertyEditorCollection, IContentTypeService contentTypeService)
         {
             _shortStringHelper = shortStringHelper;
             _webHostEnvironment = webHostEnvironment;
@@ -132,7 +136,7 @@ namespace QuickBlocks.Services
             return properties;
         }
 
-        public bool CreateRow(RowModel row)
+        public bool CreateRowPartial(RowModel row)
         {
             // Set a variable to the Documents path.
             string contentRootPath = _webHostEnvironment.ContentRootPath;
@@ -150,7 +154,8 @@ namespace QuickBlocks.Services
             // Write the string array to a new file named "WriteLines.txt".
             using (StreamWriter outputFile = new StreamWriter(Path.Combine(path, row.Alias + ".cshtml")))
             {
-                outputFile.WriteLine("@inherits Umbraco.Cms.Web.Common.Views.UmbracoViewPage<Umbraco.Cms.Core.Models.BlockListItem>");
+                outputFile.WriteLine(
+                    "@inherits Umbraco.Cms.Web.Common.Views.UmbracoViewPage<Umbraco.Cms.Core.Models.BlockListItem>");
                 outputFile.WriteLine("");
                 outputFile.WriteLine("@{");
                 outputFile.WriteLine($"    var row = ({row.ConventionName})Model.Content;");
@@ -169,65 +174,63 @@ namespace QuickBlocks.Services
                 outputFile.WriteLine(spacesToAdd + row.Html);
             }
 
-            return true; ;
+            return true;
+            ;
         }
 
-        public void CreateDataType(string name, IEnumerable<RowModel> rows)
+        public void CreateList(BlockListModel list)
         {
-
-
+            if (list.Rows != null && list.Rows.Any())
+            {
+                foreach (var row in list.Rows)
+                {
+                    CreateRowPartial(row);
+                }
+            }
+            
+            
             var editor = _propertyEditorCollection.First(x => x.Alias == "Umbraco.BlockList");
 
             var blocks = new List<BlockListConfiguration.BlockConfiguration>();
 
-            foreach (var row in rows)
+            if (list.Rows != null && list.Rows.Any())
             {
-                var contentDocType = _contentTypeService.Get(row.Alias);
-                if (contentDocType == null)
+                foreach (var row in list.Rows)
                 {
-                    var contentType = new ContentType(_shortStringHelper, -1);
-                    contentType.Name = row.Name + " Row";
-                    contentType.Alias = row.Alias;
-                    contentType.IsElement = true;
-                    contentType.IsContainer = false;
-                    contentType.Icon = "icon-science";
-                    _contentTypeService.Save(contentType);
-                    contentDocType = _contentTypeService.Get(row.Alias);
-                }
-
-                var settingsDocType = _contentTypeService.Get(row.Alias + "Settings");
-                if (settingsDocType == null)
-                {
-                    var contentType = new ContentType(_shortStringHelper, -1);
-                    contentType.Name = row.Name + " Row" + " Settings";
-                    contentType.Alias = row.Alias + "Settings";
-                    contentType.IsElement = true;
-                    contentType.IsContainer = false;
-                    contentType.Icon = "icon-science";
-                    _contentTypeService.Save(contentType);
-                    settingsDocType = _contentTypeService.Get(row.Alias + "Settings");
-                }
-
-                if (contentDocType != null)
-                {
-                    blocks.Add(new BlockListConfiguration.BlockConfiguration
+                    var contentDocType = _contentTypeService.Get(row.Alias);
+                    if (contentDocType == null)
                     {
-                        ContentElementTypeKey = contentDocType.Key,
-                        SettingsElementTypeKey = settingsDocType?.Key ?? null,
-                        Label = "{{ !$title || $title == '' ? '" + row.Name + " ' + $index : $title }}",
-                        EditorSize = "medium",
-                        ForceHideContentEditorInOverlay = false,
-                        Stylesheet = null,
-                        View = null,
-                        IconColor = "#ffffff",
-                        BackgroundColor = "#1b264f"
-                    });
+                        contentDocType = CreateContentType(row.Name, row.Alias);
+                    }
+
+                    var settingsDocType = _contentTypeService.Get( row.Alias + "Settings");
+                    if (settingsDocType == null)
+                    {
+                        settingsDocType = CreateContentType(row.Name + " Row" + " Settings", row.Alias + "Settings");
+                    }
+
+                    if (contentDocType != null)
+                    {
+                        blocks.Add(new BlockListConfiguration.BlockConfiguration
+                        {
+                            ContentElementTypeKey = contentDocType.Key,
+                            SettingsElementTypeKey = settingsDocType?.Key ?? null,
+                            Label = "{{ !$title || $title == '' ? '" + row.Name + " ' + $index : $title }}",
+                            EditorSize = "medium",
+                            ForceHideContentEditorInOverlay = false,
+                            Stylesheet = null,
+                            View = null,
+                            IconColor = "#ffffff",
+                            BackgroundColor = "#1b264f"
+                        });
+                    }
                 }
             }
 
+
             var newDataType = new DataType(editor, _configurationEditorJsonSerializer)
             {
-                Name = name,
+                Name = "[BlockList] " + list.Name,
                 Configuration = new BlockListConfiguration
                 {
                     Blocks = blocks.ToArray(),
@@ -244,6 +247,21 @@ namespace QuickBlocks.Services
             };
 
             _dataTypeService.Save(newDataType);
+        }
+
+        private IContentType CreateContentType(string name, string alias, int parentId = -1, 
+            bool isElement = false, bool isContainer = false, string iconClass = "icon-science")
+        {
+            IContentType contentDocType;
+            var contentType = new ContentType(_shortStringHelper, parentId);
+            contentType.Name = name;
+            contentType.Alias = alias;
+            contentType.IsElement = isElement;
+            contentType.IsContainer = isContainer;
+            contentType.Icon = iconClass;
+            _contentTypeService.Save(contentType);
+            contentDocType = _contentTypeService.Get(alias);
+            return contentDocType;
         }
     }
 }
