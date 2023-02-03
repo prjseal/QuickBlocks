@@ -18,6 +18,7 @@ namespace QuickBlocks.Controllers
             _blockParsingService = blockParsingService;
         }
 
+        //https://localhost:44306/umbraco/backoffice/api/quickblocksapi/build/?url=index.html
         [HttpGet]
         public IEnumerable<BlockListModel> Build(string url)
         {

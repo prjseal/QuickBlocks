@@ -55,8 +55,58 @@ namespace QuickBlocks.Services
 
             foreach (var listNode in listNodes)
             {
-                var listName = listNode.GetAttributeValue("data-list-name", "");
+                var listName = listNode.GetAttributeValue("data-list-name", "Main Content");
+                var maxPropertyWidth = listNode.GetAttributeValue("data-list-maxwidth", "");
+                var useSingleBlockMode = listNode.GetAttributeValue("data-list-single", "false");
+                var useLiveEditing = listNode.GetAttributeValue("data-list-live", "false");
+                var useInlineEditingAsDefault = listNode.GetAttributeValue("data-list-inline", "false");
+                var validationLimitMin = listNode.GetAttributeValue("data-list-min", "0");
+                var validationLimitMax = listNode.GetAttributeValue("data-list-max", "0");
+                
                 var list = new BlockListModel(listName);
+                if (!string.IsNullOrWhiteSpace(maxPropertyWidth))
+                {
+                    list.MaxPropertyWidth = maxPropertyWidth;
+                }
+                
+                if (bool.TryParse(useLiveEditing, out var live))
+                {
+                    list.UseLiveEditing = live;
+                }
+                
+                if (bool.TryParse(useInlineEditingAsDefault, out var inline))
+                {
+                    list.UseInlineEditingAsDefault = inline;
+                }
+
+                if (bool.TryParse(useSingleBlockMode, out var single))
+                {
+                    list.UseSingleBlockMode = single;
+                }
+                
+                if (single)
+                {
+                    list.ValidationLimitMin = 1;
+                    list.ValidationLimitMax = 1;
+                }
+                else
+                {
+                    if (!int.TryParse(validationLimitMin, out var min))
+                    {
+                        min = 0;
+                    }
+                
+                    if (!int.TryParse(validationLimitMax, out var max))
+                    {
+                        max = 0;
+                    }
+                    
+                    list.ValidationLimitMin = min;
+                    list.ValidationLimitMax = max;
+                }
+
+                
+                
                 var rows = this.GetRows(listNode);
                 list.Rows = rows;
 
@@ -230,18 +280,18 @@ namespace QuickBlocks.Services
 
             var newDataType = new DataType(editor, _configurationEditorJsonSerializer)
             {
-                Name = "[BlockList] " + list.Name,
+                Name = list.Name,
                 Configuration = new BlockListConfiguration
                 {
                     Blocks = blocks.ToArray(),
-                    MaxPropertyWidth = "100%",
-                    UseSingleBlockMode = false,
-                    UseLiveEditing = false,
-                    UseInlineEditingAsDefault = false,
+                    MaxPropertyWidth = list.MaxPropertyWidth,
+                    UseSingleBlockMode = list.UseSingleBlockMode,
+                    UseLiveEditing = list.UseLiveEditing,
+                    UseInlineEditingAsDefault = list.UseInlineEditingAsDefault,
                     ValidationLimit = new BlockListConfiguration.NumberRange()
                     {
-                        Min = 0,
-                        Max = 10
+                        Min = list.ValidationLimitMin,
+                        Max = list.ValidationLimitMax
                     }
                 }
             };
