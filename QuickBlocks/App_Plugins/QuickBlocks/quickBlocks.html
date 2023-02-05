@@ -2,14 +2,36 @@
     <umb-box>
         <umb-box-header title="Quick Blocks"></umb-box-header>
         <umb-box-content>
-            <input no-dirty-check style="width:300px" type="text" ng-model="model.url" name="Url" id="Url" placeholder="e.g. https://localhost:44306/index.html" />
-            <div umb-ace-editor="vm.htmlEditorOptions" model="model.htmlbody" ng-readonly="false"></div>
-            <umb-button
-                    action="submit()"
-                    label="Submit"
-                    type="button"
-                    button-style="success">
-            </umb-button>
+            <ng-form name="tabsForm" val-form-manager>
+
+                <umb-tabs-nav
+                        tabs="vm.tabs"
+                        on-tab-change="vm.changeTab(tab)">
+                </umb-tabs-nav>
+
+                <umb-tab-content
+                        ng-repeat="tab in vm.tabs"
+                        ng-show="tab.active"
+                        tab="tab">
+                    <div ng-if="tab.alias === 'codeSnippet'">
+                        <div umb-ace-editor="vm.htmlEditorOptions" model="model.htmlbody" ng-readonly="false"></div>
+                    </div>
+                    <div ng-if="tab.alias === 'fetchUrl'">
+                        <label class="control-label" for="Url"><span>Email</span></label>
+                        <input no-dirty-check class="input-block-level" style="width:300px" type="text" ng-model="model.url" name="Url" id="Url" placeholder="e.g. index.html" />
+                    </div>
+                </umb-tab-content>
+
+            </ng-form>
+            
+            <div class="flex justify-end mt2">
+                <umb-button
+                        action="submit()"
+                        label="Submit"
+                        type="button"
+                        button-style="success">
+                </umb-button>
+            </div>
         </umb-box-content>
     </umb-box>
 

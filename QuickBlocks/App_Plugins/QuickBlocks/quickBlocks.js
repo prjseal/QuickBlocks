@@ -25,6 +25,27 @@
         var vm = this;
         var apiUrl;
 
+        vm.changeTab = changeTab;
+
+        vm.tabs = [
+            {
+                "alias": "codeSnippet",
+                "label": "Code Snippet",
+                "active": true
+            },
+            {
+                "alias": "fetchUrl",
+                "label": "Fetch URL"
+            }
+        ];
+
+        function changeTab(selectedTab) {
+            vm.tabs.forEach(function(tab) {
+                tab.active = false;
+            });
+            selectedTab.active = true;
+        };
+        
         function init() {
 
             //apiUrl = Umbraco.Sys.ServerVariables["QuickBlocs"]["QuickBlocksApiUrl"];
