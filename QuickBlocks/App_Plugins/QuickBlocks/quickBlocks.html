@@ -1,5 +1,16 @@
 ﻿<div class="quick-blocks-dashboard" ng-controller="QuickBlocksController as vm">
-    <h1>Quick Blocks</h1>
-    <input style="width:300px" type="text" ng-model="model.url" name="Url" id="Url" placeholder="e.g. https://localhost:44306/index.html" />
-    <button name="submit" id="submit" ng-click="submit()">Submit</button>
+    <umb-box>
+        <umb-box-header title="Quick Blocks"></umb-box-header>
+        <umb-box-content>
+            <input no-dirty-check style="width:300px" type="text" ng-model="model.url" name="Url" id="Url" placeholder="e.g. https://localhost:44306/index.html" />
+            <div umb-ace-editor="vm.htmlEditorOptions" model="model.htmlbody" ng-readonly="false"></div>
+            <umb-button
+                    action="submit()"
+                    label="Submit"
+                    type="button"
+                    button-style="success">
+            </umb-button>
+        </umb-box-content>
+    </umb-box>
+
 </div>

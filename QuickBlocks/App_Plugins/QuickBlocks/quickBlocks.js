@@ -4,64 +4,58 @@
     function QuickBlocksController($scope, $http, editorState, navigationService, $location) {
 
         $scope.submit = function () {
+            //apiUrl = Umbraco.Sys.ServerVariables["QuickBlocks"]["QuickBlocksApiUrl"];
 
-            var url = $scope.model.url
-
-            $http.get("/umbraco/backoffice/api/quickblocksapi/build/?url=" + url).then(function (response) {
+            apiUrl = '/umbraco/backoffice/api/quickblocksapi/';
+            
+            $http.post(apiUrl + "build", JSON.stringify({ Url: $scope.model.url, HtmlBody: $scope.model.htmlbody }),
+                {
+                    headers: {
+                        'Content-Type': 'application/json'
+                    }
+                }).then(function (response) {
                 console.log(response);
+
+            }, function (response) {
+                console.log('error');
             });
-            // apiUrl = Umbraco.Sys.ServerVariables["QuickBlocs"]["QuickBlocksApiUrl"];
-            //
-            // $http.post(apiUrl + "CreateNewMedia", JSON.stringify({ MediaId: parseInt($scope.mediaId), QueryString: $scope.model.queryString, OverwriteExisting: overwriteExisting }),
-            //     {
-            //         headers: {
-            //             'Content-Type': 'application/json'
-            //         }
-            //     }).then(function (response) {
-            //     navigationService.hideDialog();
-            //
-            //     if (editorState.current.id != response.data) {
-            //         $location.path('media/media/edit/' + response.data);
-            //     }
-            //     else {
-            //         window.location.reload(true);
-            //     }
-            //
-            // }, function (response) {
-            //     navigationService.hideDialog();
-            // });
 
         };
 
         var vm = this;
         var apiUrl;
-        var mediaUrl;
 
         function init() {
 
             //apiUrl = Umbraco.Sys.ServerVariables["QuickBlocs"]["QuickBlocksApiUrl"];
 
             $scope.model = {
-                url: "",
+                url: '',
+                htmlbody: ''
             };
 
-            // $http.get(apiUrl + 'GetImageProccessorOptions').then(function (response) {
-            //     $scope.availableImageProcessorOptions = response.data;
-            // });
-            //
-            // if (editorState.current.contentTypeAlias === "Image") {
-            //     mediaUrl = editorState.current.mediaLink;
-            //     vm.mediaUrl = mediaUrl;
-            //     vm.previewMediaUrl = mediaUrl;
-            //     vm.fileName = editorState.current.mediaLink.replace(/^.*[\\\/]/, '');
-            // }
-            //
-            // vm.selectedProcessorChanged = selectedProcessorChanged;
-            // vm.setQueryString = setQueryString;
-            // vm.debounce = 0;
-            // vm.angular = angular;
-            // vm.showQueryString = true;
-
+            vm.htmlEditorOptions = {
+                autoFocus: false,
+                showGutter: true,
+                useWrapMode: true,
+                showInvisibles: false,
+                showIndentGuides: false,
+                useSoftTabs: true,
+                showPrintMargin: false,
+                disableSearch: false,
+                theme: "chrome",
+                mode: "javascript",
+                firstLineNumber: 1,
+                advanced: {
+                    fontSize: "small",
+                    enableSnippets: false,
+                    enableBasicAutocompletion: false,
+                    enableLiveAutocompletion: false,
+                    minLines: undefined,
+                    maxLines: undefined,
+                    wrap: true
+                },
+            };
         }
         
         init();

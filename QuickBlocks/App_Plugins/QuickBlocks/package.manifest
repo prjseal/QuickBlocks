@@ -16,5 +16,8 @@
   ],
   "javascript": [
     "~/App_Plugins/QuickBlocks/quickBlocks.js"
+  ],
+  "css": [
+    "~/App_Plugins/QuickBlocks/quickBlocks.css"
   ]
 }
