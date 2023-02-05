@@ -1,23 +1,23 @@
 ﻿(function () {
     'use strict';
 
-    function QuickBlocksController($scope, $http, editorState, navigationService, $location) {
+    function QuickBlocksController($scope, $http, editorState, navigationService, $location, notificationsService) {
 
         $scope.submit = function () {
-            //apiUrl = Umbraco.Sys.ServerVariables["QuickBlocks"]["QuickBlocksApiUrl"];
-
-            apiUrl = '/umbraco/backoffice/api/quickblocksapi/';
-            
-            $http.post(apiUrl + "build", JSON.stringify({ Url: $scope.model.url, HtmlBody: $scope.model.htmlbody }),
+            apiUrl = Umbraco.Sys.ServerVariables["QuickBlocks"]["QuickBlocksApi"];
+           
+            $http.post(apiUrl, JSON.stringify({ Url: $scope.model.url, HtmlBody: $scope.model.htmlbody }),
                 {
                     headers: {
                         'Content-Type': 'application/json'
                     }
                 }).then(function (response) {
                 console.log(response);
+                notificationsService.success('QuickBlocks', 'Your Block List has been created successfully');
 
             }, function (response) {
                 console.log('error');
+                notificationsService.success('QuickBlocks', 'There was an error when trying to process your request. Check the console for more details.');
             });
 
         };
@@ -29,8 +29,8 @@
 
         vm.tabs = [
             {
-                "alias": "codeSnippet",
-                "label": "Code Snippet",
+                "alias": "htmlSnippet",
+                "label": "HTML Snippet",
                 "active": true
             },
             {
@@ -48,7 +48,7 @@
         
         function init() {
 
-            //apiUrl = Umbraco.Sys.ServerVariables["QuickBlocs"]["QuickBlocksApiUrl"];
+            apiUrl = Umbraco.Sys.ServerVariables["QuickBlocks"]["QuickBlocksApi"];
 
             $scope.model = {
                 url: '',

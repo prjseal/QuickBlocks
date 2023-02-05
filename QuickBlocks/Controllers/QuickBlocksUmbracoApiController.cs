@@ -19,7 +19,7 @@ namespace QuickBlocks.Controllers
         public QuickBlocksApiController(IBlockParsingService blockParsingService, ILogger<QuickBlocksApiController> logger)
         {
             _blockParsingService = blockParsingService;
-            _logger = logger;
+            _logger = logger; 
         }
 
         //https://localhost:44306/umbraco/backoffice/api/quickblocksapi/build/
