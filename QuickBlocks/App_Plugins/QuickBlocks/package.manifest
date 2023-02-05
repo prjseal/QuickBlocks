@@ -13,5 +13,8 @@
         { "grant": "admin" }
       ]
     }
+  ],
+  "javascript": [
+    "~/App_Plugins/QuickBlocks/quickBlocks.js"
   ]
 }

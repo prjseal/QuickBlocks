@@ -1,5 +1,5 @@
-﻿<div class="quick-blocks-dashboard">
+﻿<div class="quick-blocks-dashboard" ng-controller="QuickBlocksController as vm">
     <h1>Quick Blocks</h1>
-    <input style="width:300px" type="text" name="Url" id="Url" placeholder="e.g. https://localhost:44306/index.html" />
-    <button name="submit" id="submit">Submit</button>
+    <input style="width:300px" type="text" ng-model="model.url" name="Url" id="Url" placeholder="e.g. https://localhost:44306/index.html" />
+    <button name="submit" id="submit" ng-click="submit()">Submit</button>
 </div>
