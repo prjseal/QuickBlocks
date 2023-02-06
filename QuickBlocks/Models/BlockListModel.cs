@@ -13,9 +13,9 @@ namespace QuickBlocks.Models
         public int ValidationLimitMin { get; set; }
         public int ValidationLimitMax { get; set; }
 
-        public BlockListModel(string name, string prefix = "[BlockList] ")
+        public BlockListModel(string name)
         {
-            Name = prefix + name;
+            Name = name;
         }
     }
 }

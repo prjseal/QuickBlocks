@@ -6,7 +6,7 @@ namespace QuickBlocks.Services
 {
     public interface IBlockParsingService
     {
-        List<BlockListModel> GetLists(HtmlNode node);
+        List<BlockListModel> GetLists(HtmlNode node, string prefix = "[BlockList]");
         List<RowModel> GetRows(HtmlNode node);
         List<BlockItemModel> GetBlocks(HtmlNode node, string rowName);
         List<PropertyModel> GetProperties(HtmlNode node);

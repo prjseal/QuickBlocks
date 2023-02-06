@@ -45,7 +45,7 @@ namespace QuickBlocks.Services
             _contentTypeService = contentTypeService;
         }
 
-        public List<BlockListModel> GetLists(HtmlNode node)
+        public List<BlockListModel> GetLists(HtmlNode node, string prefix = "[BlockList]")
         {
             var lists = new List<BlockListModel>();
 
@@ -63,7 +63,7 @@ namespace QuickBlocks.Services
                 var validationLimitMin = listNode.GetAttributeValue("data-list-min", "0");
                 var validationLimitMax = listNode.GetAttributeValue("data-list-max", "0");
                 
-                var list = new BlockListModel(listName);
+                var list = new BlockListModel(prefix + " " + listName);
                 if (!string.IsNullOrWhiteSpace(maxPropertyWidth))
                 {
                     list.MaxPropertyWidth = maxPropertyWidth;
@@ -127,10 +127,16 @@ namespace QuickBlocks.Services
             foreach (var rowNode in rowNodes)
             {
                 var rowName = rowNode.GetAttributeValue("data-row-name", "");
-                var row = new RowModel(_shortStringHelper, rowName, rowNode);
-                var blocks = this.GetBlocks(rowNode, rowName);
-                row.Blocks = blocks;
+                var settingsName = rowNode.GetAttributeValue("data-row-settings-name", "");
+                var hasSettingsValue = rowNode.GetAttributeValue("data-row-has-settings", "true");
 
+                bool.TryParse(hasSettingsValue, out var hasSettings);
+                
+                var ignoreNamingConventionValue = rowNode.GetAttributeValue("data-row-ignore-convention", "false");
+
+                bool.TryParse(ignoreNamingConventionValue, out var ignoreNamingConvention);
+                
+                var row = new RowModel(_shortStringHelper, rowName, rowNode, settingsName, hasSettings, ignoreNamingConvention);
 
                 var properties = GetProperties(rowNode);
                 row.Properties = properties;
@@ -208,8 +214,8 @@ namespace QuickBlocks.Services
                     "@inherits Umbraco.Cms.Web.Common.Views.UmbracoViewPage<Umbraco.Cms.Core.Models.BlockListItem>");
                 outputFile.WriteLine("");
                 outputFile.WriteLine("@{");
-                outputFile.WriteLine($"    var row = ({row.ConventionName})Model.Content;");
-                outputFile.WriteLine($"    var settings = ({row.ConventionName}Settings)Model.Settings;");
+                outputFile.WriteLine($"    var row = ({row.Name.Replace(" ", "")})Model.Content;");
+                outputFile.WriteLine($"    var settings = ({row.SettingsName.Replace(" ", "")})Model.Settings;");
                 outputFile.WriteLine("");
                 outputFile.WriteLine("    if (settings.Hide) { return; }");
                 outputFile.WriteLine("}");
@@ -253,10 +259,10 @@ namespace QuickBlocks.Services
                         contentDocType = CreateContentType(row.Name, row.Alias);
                     }
 
-                    var settingsDocType = _contentTypeService.Get( row.Alias + "Settings");
-                    if (settingsDocType == null)
+                    var settingsDocType = row.HasSettings ? _contentTypeService.Get(row.SettingsAlias) : null;
+                    if (settingsDocType == null && row.HasSettings)
                     {
-                        settingsDocType = CreateContentType(row.Name + " Row" + " Settings", row.Alias + "Settings");
+                        settingsDocType = CreateContentType(row.SettingsName, row.SettingsAlias);
                     }
 
                     if (contentDocType != null)
