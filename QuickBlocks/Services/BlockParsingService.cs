@@ -300,7 +300,7 @@ namespace QuickBlocks.Services
         }
 
         private IContentType CreateContentType(string name, string alias, int parentId = -1, 
-            bool isElement = false, bool isContainer = false, string iconClass = "icon-science")
+            bool isElement = true, bool isContainer = false, string iconClass = "icon-science")
         {
             IContentType contentDocType;
             var contentType = new ContentType(_shortStringHelper, parentId);
