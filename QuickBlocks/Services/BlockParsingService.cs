@@ -45,17 +45,20 @@ namespace QuickBlocks.Services
             _contentTypeService = contentTypeService;
         }
 
-        public List<BlockListModel> GetLists(HtmlNode node, string prefix = "[BlockList]")
+        public List<BlockListModel> GetLists(HtmlNode node, bool isNestedList, string prefix = "[BlockList]")
         {
+            var xpath = isNestedList ? "//*[@data-sub-list-name]" : "//*[@data-list-name]";
+            var name = isNestedList ? "data-sub-list-name" : "data-list-name";
+            
             var lists = new List<BlockListModel>();
-
-            var listNodes = node.SelectNodes("//*[@data-list-name]");
+            
+            var listNodes = node.SelectNodes(xpath);
 
             if (listNodes == null || !listNodes.Any()) return lists;
 
             foreach (var listNode in listNodes)
             {
-                var listName = listNode.GetAttributeValue("data-list-name", "Main Content");
+                var listName = listNode.GetAttributeValue(name, "");
                 var maxPropertyWidth = listNode.GetAttributeValue("data-list-maxwidth", "");
                 var useSingleBlockMode = listNode.GetAttributeValue("data-list-single", "false");
                 var useLiveEditing = listNode.GetAttributeValue("data-list-live", "false");
@@ -107,7 +110,7 @@ namespace QuickBlocks.Services
 
                 
                 
-                var rows = this.GetRows(listNode);
+                var rows = this.GetRows(listNode, isNestedList);
                 list.Rows = rows;
 
                 lists.Add(list);
@@ -116,23 +119,26 @@ namespace QuickBlocks.Services
             return lists;
         }
 
-        public List<RowModel> GetRows(HtmlNode node)
+        public List<RowModel> GetRows(HtmlNode node, bool isNestedList)
         {
+            var xpath = isNestedList ? "//*[@data-item-name]" : "//*[@data-row-name]";
+            var name = isNestedList ? "data-item-name" : "data-row-name";
+            
             var rows = new List<RowModel>();
 
-            var rowNodes = node.SelectNodes("//*[@data-row-name]");
+            var rowNodes = node.SelectNodes(xpath);
 
             if (rowNodes == null || !rowNodes.Any()) return rows;
 
             foreach (var rowNode in rowNodes)
             {
-                var rowName = rowNode.GetAttributeValue("data-row-name", "");
-                var settingsName = rowNode.GetAttributeValue("data-row-settings-name", "");
-                var hasSettingsValue = rowNode.GetAttributeValue("data-row-has-settings", "true");
+                var rowName = rowNode.GetAttributeValue(name, "");
+                var settingsName = rowNode.GetAttributeValue("data-settings-name", "");
+                var hasSettingsValue = rowNode.GetAttributeValue("data-has-settings", "true");
 
                 bool.TryParse(hasSettingsValue, out var hasSettings);
                 
-                var ignoreNamingConventionValue = rowNode.GetAttributeValue("data-row-ignore-convention", "false");
+                var ignoreNamingConventionValue = rowNode.GetAttributeValue("data-ignore-convention", "false");
 
                 bool.TryParse(ignoreNamingConventionValue, out var ignoreNamingConvention);
                 

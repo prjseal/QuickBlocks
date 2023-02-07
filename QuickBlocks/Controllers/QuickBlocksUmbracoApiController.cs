@@ -41,9 +41,12 @@ namespace QuickBlocks.Controllers
             {
                 doc.Load(quickBlocksInstruction.Url);
             }
-            var lists = _blockParsingService.GetLists(doc.DocumentNode);
+            
+            var lists = _blockParsingService.GetLists(doc.DocumentNode, true);
+            
+            lists.AddRange(_blockParsingService.GetLists(doc.DocumentNode, false));
 
-            if (lists == null || !lists.Any()) return lists;
+            if (!lists.Any()) return lists;
             
             foreach (var list in lists)
             {
