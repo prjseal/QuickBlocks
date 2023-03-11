@@ -23,4 +23,12 @@
     <None Remove="App_Plugins\QuickBlocks\quickBlocks.css" />
     <None Remove="App_Plugins\QuickBlocks\quickBlocks.html" />
   </ItemGroup>
+
+  <ItemGroup>
+    <EditorConfigFiles Remove="C:\Code\GitHub\QuickBlocks\QuickBlocks\.editorconfig" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <None Include="C:\Code\GitHub\QuickBlocks\QuickBlocks\.editorconfig" />
+  </ItemGroup>
 </Project>

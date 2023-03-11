@@ -10,7 +10,5 @@ namespace QuickBlocks.Services
         List<RowModel> GetRows(HtmlNode node, bool isNestedList);
         List<BlockItemModel> GetBlocks(HtmlNode node, string rowName);
         List<PropertyModel> GetProperties(HtmlNode node);
-        bool CreateRowPartial(RowModel row);
-        void CreateList(BlockListModel row);
     }
 }

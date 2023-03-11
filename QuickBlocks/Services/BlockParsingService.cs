@@ -1,57 +1,27 @@
-﻿using System;
-using System.Collections.Generic;
-using HtmlAgilityPack;
-using Umbraco.Cms.Core.Strings;
-using System.IO;
-using System.Linq;
-using Microsoft.AspNetCore.Hosting;
+﻿using HtmlAgilityPack;
 using QuickBlocks.Models;
-using Umbraco.Cms.Core.Mapping;
-using Umbraco.Cms.Core.Models;
-using Umbraco.Cms.Core.Models.ContentEditing;
-using Umbraco.Cms.Core.PropertyEditors;
-using Umbraco.Cms.Core.Serialization;
-using Umbraco.Cms.Core.Services;
-using File = System.IO.File;
-using System.Data;
-using System.Text.Json;
+using System.Collections.Generic;
+using System.Linq;
+using Umbraco.Cms.Core.Strings;
 
 namespace QuickBlocks.Services
 {
     public class BlockParsingService : IBlockParsingService
     {
         private readonly IShortStringHelper _shortStringHelper;
-        private readonly IWebHostEnvironment _webHostEnvironment;
-        private readonly IDataTypeService _dataTypeService;
-        private readonly IUmbracoMapper _umbracoMapper;
-        private readonly IDataValueEditorFactory _dataValueEditorFactory;
-        private readonly IConfigurationEditorJsonSerializer _configurationEditorJsonSerializer;
-        private readonly PropertyEditorCollection _propertyEditorCollection;
-        private readonly IContentTypeService _contentTypeService;
 
-        public BlockParsingService(IShortStringHelper shortStringHelper, IWebHostEnvironment webHostEnvironment,
-            IDataTypeService dataTypeService, IUmbracoMapper umbracoMapper,
-            IDataValueEditorFactory dataValueEditorFactory,
-            IConfigurationEditorJsonSerializer configurationEditorJsonSerializer,
-            PropertyEditorCollection propertyEditorCollection, IContentTypeService contentTypeService)
+        public BlockParsingService(IShortStringHelper shortStringHelper)
         {
             _shortStringHelper = shortStringHelper;
-            _webHostEnvironment = webHostEnvironment;
-            _dataTypeService = dataTypeService;
-            _umbracoMapper = umbracoMapper;
-            _dataValueEditorFactory = dataValueEditorFactory;
-            _configurationEditorJsonSerializer = configurationEditorJsonSerializer;
-            _propertyEditorCollection = propertyEditorCollection;
-            _contentTypeService = contentTypeService;
         }
 
         public List<BlockListModel> GetLists(HtmlNode node, bool isNestedList, string prefix = "[BlockList]")
         {
             var xpath = isNestedList ? "//*[@data-sub-list-name]" : "//*[@data-list-name]";
             var name = isNestedList ? "data-sub-list-name" : "data-list-name";
-            
+
             var lists = new List<BlockListModel>();
-            
+
             var listNodes = node.SelectNodes(xpath);
 
             if (listNodes == null || !listNodes.Any()) return lists;
@@ -65,18 +35,18 @@ namespace QuickBlocks.Services
                 var useInlineEditingAsDefault = listNode.GetAttributeValue("data-list-inline", "false");
                 var validationLimitMin = listNode.GetAttributeValue("data-list-min", "0");
                 var validationLimitMax = listNode.GetAttributeValue("data-list-max", "0");
-                
+
                 var list = new BlockListModel(prefix + " " + listName);
                 if (!string.IsNullOrWhiteSpace(maxPropertyWidth))
                 {
                     list.MaxPropertyWidth = maxPropertyWidth;
                 }
-                
+
                 if (bool.TryParse(useLiveEditing, out var live))
                 {
                     list.UseLiveEditing = live;
                 }
-                
+
                 if (bool.TryParse(useInlineEditingAsDefault, out var inline))
                 {
                     list.UseInlineEditingAsDefault = inline;
@@ -86,7 +56,7 @@ namespace QuickBlocks.Services
                 {
                     list.UseSingleBlockMode = single;
                 }
-                
+
                 if (single)
                 {
                     list.ValidationLimitMin = 1;
@@ -98,18 +68,18 @@ namespace QuickBlocks.Services
                     {
                         min = 0;
                     }
-                
+
                     if (!int.TryParse(validationLimitMax, out var max))
                     {
                         max = 0;
                     }
-                    
+
                     list.ValidationLimitMin = min;
                     list.ValidationLimitMax = max;
                 }
 
-                
-                
+
+
                 var rows = this.GetRows(listNode, isNestedList);
                 list.Rows = rows;
 
@@ -123,7 +93,7 @@ namespace QuickBlocks.Services
         {
             var xpath = isNestedList ? "//*[@data-item-name]" : "//*[@data-row-name]";
             var name = isNestedList ? "data-item-name" : "data-row-name";
-            
+
             var rows = new List<RowModel>();
 
             var rowNodes = node.SelectNodes(xpath);
@@ -137,11 +107,11 @@ namespace QuickBlocks.Services
                 var hasSettingsValue = rowNode.GetAttributeValue("data-has-settings", "true");
 
                 bool.TryParse(hasSettingsValue, out var hasSettings);
-                
+
                 var ignoreNamingConventionValue = rowNode.GetAttributeValue("data-ignore-convention", "false");
 
                 bool.TryParse(ignoreNamingConventionValue, out var ignoreNamingConvention);
-                
+
                 var row = new RowModel(_shortStringHelper, rowName, rowNode, settingsName, hasSettings, ignoreNamingConvention);
 
                 var properties = GetProperties(rowNode);
@@ -196,134 +166,6 @@ namespace QuickBlocks.Services
             }
 
             return properties;
-        }
-
-        public bool CreateRowPartial(RowModel row)
-        {
-            // Set a variable to the Documents path.
-            string contentRootPath = _webHostEnvironment.ContentRootPath;
-
-            var blocklistComponentsFolderPath =
-                Path.Combine(contentRootPath, "Views\\", "Partials\\", "blocklist\\", "Components\\");
-
-            if (!File.Exists(blocklistComponentsFolderPath))
-            {
-                Directory.CreateDirectory(blocklistComponentsFolderPath);
-            }
-
-            var path = Path.Combine(contentRootPath, "Views\\", "Partials\\", "blocklist\\", "Components\\");
-
-            // Write the string array to a new file named "WriteLines.txt".
-            using (StreamWriter outputFile = new StreamWriter(Path.Combine(path, row.Alias + ".cshtml")))
-            {
-                outputFile.WriteLine(
-                    "@inherits Umbraco.Cms.Web.Common.Views.UmbracoViewPage<Umbraco.Cms.Core.Models.BlockListItem>");
-                outputFile.WriteLine("");
-                outputFile.WriteLine("@{");
-                outputFile.WriteLine($"    var row = ({row.Name.Replace(" ", "")})Model.Content;");
-                outputFile.WriteLine($"    var settings = ({row.SettingsName.Replace(" ", "")})Model.Settings;");
-                outputFile.WriteLine("");
-                outputFile.WriteLine("    if (settings.Hide) { return; }");
-                outputFile.WriteLine("}");
-                outputFile.WriteLine("");
-
-                var lines = row.Html.Split("\n");
-                var lastLine = lines.LastOrDefault();
-                int spaces = lastLine.TakeWhile(Char.IsWhiteSpace).Count();
-
-                var spacesToAdd = lastLine.Substring(0, spaces >= 0 ? spaces : 0);
-
-                outputFile.WriteLine(spacesToAdd + row.Html);
-            }
-
-            return true;
-            ;
-        }
-
-        public void CreateList(BlockListModel list)
-        {
-            if (list.Rows != null && list.Rows.Any())
-            {
-                foreach (var row in list.Rows)
-                {
-                    CreateRowPartial(row);
-                }
-            }
-            
-            
-            var editor = _propertyEditorCollection.First(x => x.Alias == "Umbraco.BlockList");
-
-            var blocks = new List<BlockListConfiguration.BlockConfiguration>();
-
-            if (list.Rows != null && list.Rows.Any())
-            {
-                foreach (var row in list.Rows)
-                {
-                    var contentDocType = _contentTypeService.Get(row.Alias);
-                    if (contentDocType == null)
-                    {
-                        contentDocType = CreateContentType(row.Name, row.Alias);
-                    }
-
-                    var settingsDocType = row.HasSettings ? _contentTypeService.Get(row.SettingsAlias) : null;
-                    if (settingsDocType == null && row.HasSettings)
-                    {
-                        settingsDocType = CreateContentType(row.SettingsName, row.SettingsAlias);
-                    }
-
-                    if (contentDocType != null)
-                    {
-                        blocks.Add(new BlockListConfiguration.BlockConfiguration
-                        {
-                            ContentElementTypeKey = contentDocType.Key,
-                            SettingsElementTypeKey = settingsDocType?.Key ?? null,
-                            Label = "{{ !$title || $title == '' ? '" + row.Name + " ' + $index : $title }}",
-                            EditorSize = "medium",
-                            ForceHideContentEditorInOverlay = false,
-                            Stylesheet = null,
-                            View = null,
-                            IconColor = "#ffffff",
-                            BackgroundColor = "#1b264f"
-                        });
-                    }
-                }
-            }
-
-
-            var newDataType = new DataType(editor, _configurationEditorJsonSerializer)
-            {
-                Name = list.Name,
-                Configuration = new BlockListConfiguration
-                {
-                    Blocks = blocks.ToArray(),
-                    MaxPropertyWidth = list.MaxPropertyWidth,
-                    UseSingleBlockMode = list.UseSingleBlockMode,
-                    UseLiveEditing = list.UseLiveEditing,
-                    UseInlineEditingAsDefault = list.UseInlineEditingAsDefault,
-                    ValidationLimit = new BlockListConfiguration.NumberRange()
-                    {
-                        Min = list.ValidationLimitMin,
-                        Max = list.ValidationLimitMax
-                    }
-                }
-            };
-
-            _dataTypeService.Save(newDataType);
-        }
-
-        private IContentType CreateContentType(string name, string alias, int parentId = -1, 
-            bool isElement = true, bool isContainer = false, string iconClass = "icon-science")
-        {
-            IContentType contentDocType;
-            var contentType = new ContentType(_shortStringHelper, parentId);
-            contentType.Name = name;
-            contentType.Alias = alias;
-            contentType.IsElement = isElement;
-            contentType.IsContainer = isContainer;
-            contentType.Icon = iconClass;
-            _contentTypeService.Save(contentType);
-            contentDocType = _contentTypeService.Get(alias);
-            return contentDocType;
         }
     }
 }

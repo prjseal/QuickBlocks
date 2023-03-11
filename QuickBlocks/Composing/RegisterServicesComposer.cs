@@ -9,6 +9,7 @@ namespace QuickBlocks.Composing
     {
         public void Compose(IUmbracoBuilder builder)
         {
+            builder.Services.AddTransient<IBlockCreationService, BlockCreationService>();
             builder.Services.AddTransient<IBlockParsingService, BlockParsingService>();
         }
     }

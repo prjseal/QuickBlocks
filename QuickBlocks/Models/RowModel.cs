@@ -21,7 +21,7 @@ namespace QuickBlocks.Models
         {
             IgnoreNamingConvention = ignoreNamingConvention;
             HasSettings = hasSettings;
-            
+
             if (ignoreNamingConvention)
             {
                 Name = name;
@@ -32,7 +32,7 @@ namespace QuickBlocks.Models
                 Name = name + " " + suffix;
                 SettingsName = hasSettings ? Name + " " + settingsSuffix : "";
             }
-            
+
             Alias = Name.Replace(" ", "").ToSafeAlias(shortStringHelper, true);
             SettingsAlias = hasSettings ? SettingsName.Replace(" ", "").ToSafeAlias(shortStringHelper, true) : "";
             Html = node.OuterHtml;
