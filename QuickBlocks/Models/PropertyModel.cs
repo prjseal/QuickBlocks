@@ -13,8 +13,8 @@ namespace QuickBlocks.Models
         {
             Name = name;
             PropertyType = propertyType;
-            Html = node.OuterHtml;
-            Value = node.InnerHtml;
+            Html = node?.OuterHtml;
+            Value = node?.InnerHtml;
         }
     }
 }

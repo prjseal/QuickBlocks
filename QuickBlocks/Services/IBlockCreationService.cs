@@ -16,15 +16,24 @@ namespace QuickBlocks.Services
     {
         public bool CreateRowPartial(RowModel row);
 
-        void CreateList(BlockListModel list);
+        void CreateList(BlockListModel list, FolderStructure folderStructure, int parentDataTypeId);
 
-        List<BlockListConfiguration.BlockConfiguration> CreateBlockConfigurations(BlockListModel list);
+        List<BlockListConfiguration.BlockConfiguration> CreateBlockConfigurations(BlockListModel list, FolderStructure folderStructure);
 
-        BlockListConfiguration.BlockConfiguration CreateBlockConfiguration(RowModel row);
+        BlockListConfiguration.BlockConfiguration CreateBlockConfiguration(RowModel row, FolderStructure folderStructure);
 
-        void CreateBlockListDatType(BlockListModel list, List<BlockListConfiguration.BlockConfiguration> blocks);
+        void CreateBlockListDataType(BlockListModel list, List<BlockListConfiguration.BlockConfiguration> blocks, int parentDataTypeId);
 
         IContentType CreateContentType(string name, string alias, int parentId = -1,
-            bool isElement = true, bool isContainer = false, string iconClass = "icon-science");
+            bool isElement = true, bool isContainer = false, string iconClass = "icon-science", 
+            bool allowedAtRoot = false, bool updateDoctype = false);
+
+        void AddPropertiesToContentType(IContentType contentType, IEnumerable<PropertyModel> properties, string groupName);
+
+        FolderStructure CreateFolderStructure();
+
+        int CreateSupportingDataTypes();
+
+        void CreateSupportingContentTypes(int parentId);
     }
 }

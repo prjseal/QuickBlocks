@@ -114,7 +114,7 @@ namespace QuickBlocks.Services
 
                 var row = new RowModel(_shortStringHelper, rowName, rowNode, settingsName, hasSettings, ignoreNamingConvention);
 
-                var properties = GetProperties(rowNode);
+                var properties = GetProperties(rowNode, isNestedList ? "item" : "row");
                 row.Properties = properties;
 
                 rows.Add(row);
@@ -137,7 +137,7 @@ namespace QuickBlocks.Services
                 {
                     var item = new BlockItemModel(_shortStringHelper, itemName, descendant);
 
-                    var properties = GetProperties(descendant);
+                    var properties = GetProperties(descendant, "item");
                     item.Properties = properties;
 
                     blocks.Add(item);
@@ -147,7 +147,7 @@ namespace QuickBlocks.Services
             return blocks;
         }
 
-        public List<PropertyModel> GetProperties(HtmlNode node)
+        public List<PropertyModel> GetProperties(HtmlNode node, string context)
         {
             var properties = new List<PropertyModel>();
 
@@ -156,8 +156,41 @@ namespace QuickBlocks.Services
 
             foreach (var descendant in descendants)
             {
+                var itemLocation = descendant.GetAttributeValue("data-prop-location", "");
                 var itemName = descendant.GetAttributeValue("data-prop-name", "");
-                var itemType = descendant.GetAttributeValue("data-prop-type", "Textstring");
+                var itemType = descendant.GetAttributeValue("data-prop-type", "");
+
+                if (context == "page" && itemLocation != "page") continue;
+
+                if (context == "row" && itemLocation != "row") continue;
+
+                if (!string.IsNullOrWhiteSpace(itemName) && string.IsNullOrWhiteSpace(itemType))
+                {
+                    switch (descendant.OriginalName.ToLower())
+                    {
+                        case "img":
+                            itemType = "Image Media Picker";
+                            break;
+                        case "h1":
+                        case "h2":
+                        case "h3":
+                        case "h4":
+                        case "h5":
+                        case "h6":
+                            itemType = "Textstring";
+                            break;
+                        case "p":
+                            itemType = "Richtext editor";
+                            break;
+                        case "a":
+                            itemType = "Single Url Picker";
+                            break;
+                        default:
+                            itemType = "Textstring";
+                            break;
+                    }
+                }
+
                 if (!string.IsNullOrWhiteSpace(itemName))
                 {
                     var item = new PropertyModel(itemName, itemType, descendant);
@@ -166,6 +199,24 @@ namespace QuickBlocks.Services
             }
 
             return properties;
+        }
+
+        public ContentTypeModel GetContentType(HtmlNode node)
+        {
+            var descendants = node.Descendants();
+            if (descendants == null || !descendants.Any()) return null;
+
+            foreach(var descendant in descendants)
+            {
+                var itemName = descendant.GetAttributeValue("data-content-type-name", "");
+                if (!string.IsNullOrWhiteSpace(itemName))
+                {
+                    var item = new ContentTypeModel(_shortStringHelper, itemName);
+                    return item;
+                }
+            }
+
+            return null;
         }
     }
 }

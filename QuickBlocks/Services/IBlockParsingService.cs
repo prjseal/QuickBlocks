@@ -9,6 +9,7 @@ namespace QuickBlocks.Services
         List<BlockListModel> GetLists(HtmlNode node, bool isNestedList, string prefix = "[BlockList]");
         List<RowModel> GetRows(HtmlNode node, bool isNestedList);
         List<BlockItemModel> GetBlocks(HtmlNode node, string rowName);
-        List<PropertyModel> GetProperties(HtmlNode node);
+        List<PropertyModel> GetProperties(HtmlNode node, string location);
+        ContentTypeModel GetContentType(HtmlNode node);
     }
 }
