@@ -1,10 +1,13 @@
-﻿using HtmlAgilityPack;
+﻿using System;
+
+using HtmlAgilityPack;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Logging;
 using QuickBlocks.Models;
 using QuickBlocks.Services;
 using System.Collections.Generic;
 using System.Linq;
+using System.Text;
 
 using Umbraco.Cms.Core.Models;
 using Umbraco.Cms.Core.Services;
@@ -82,6 +85,11 @@ namespace QuickBlocks.Controllers
                     _blockCreationService.AddPropertiesToContentType(newContentType, properties, "Content");
                 }
 
+                var masterTemplate = _fileService.CreateTemplateWithIdentity("Master", "master", doc.Text);
+
+                masterTemplate.Content = masterTemplate.Content + Environment.NewLine + doc.Text;
+                _fileService.SaveTemplate((masterTemplate));
+                
                 var tryCreateTemplate = _fileService.CreateTemplateForContentType("homePage", "Home Page");
                 if(tryCreateTemplate.Success)
                 {
@@ -91,6 +99,23 @@ namespace QuickBlocks.Controllers
                         newContentType.SetDefaultTemplate(template);
                         _contentTypeService.Save(newContentType);
                     }
+                    
+                    template.SetMasterTemplate(masterTemplate);
+                    _fileService.SaveTemplate(template);
+                    
+                    var templateContent = new StringBuilder();
+                    templateContent.AppendLine("@using Umbraco.Cms.Web.Common.PublishedModels;");
+                    templateContent.AppendLine("@using Umbraco.Cms.Web.Common.PublishedModels;");
+                    templateContent.AppendLine("@inherits Umbraco.Cms.Web.Common.Views.UmbracoViewPage<ContentModels.HomePage>");
+                    templateContent.AppendLine("    @using ContentModels = Umbraco.Cms.Web.Common.PublishedModels;");
+                    templateContent.AppendLine("@{");
+                    templateContent.AppendLine("    Layout = \"master.cshtml\";");
+                    templateContent.AppendLine("}");
+                    templateContent.AppendLine();
+                    templateContent.AppendLine("@Html.GetBlockListHtml(Model.MainContent)");
+
+                    template.Content = templateContent.ToString();
+                    _fileService.SaveTemplate(template);
                 }
 
                 

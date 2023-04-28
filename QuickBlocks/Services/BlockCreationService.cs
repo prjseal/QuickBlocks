@@ -62,7 +62,7 @@ namespace QuickBlocks.Services
             using (StreamWriter outputFile = new StreamWriter(filePath))
             {
                 outputFile.WriteLine(
-                    "@inherits Umbraco.Cms.Web.Common.Views.UmbracoViewPage<Umbraco.Cms.Core.Models.BlockListItem>");
+                    "@inherits Umbraco.Cms.Web.Common.Views.UmbracoViewPage<Umbraco.Cms.Core.Models.Blocks.BlockListItem>");
                 outputFile.WriteLine("");
                 outputFile.WriteLine("@{");
                 outputFile.WriteLine($"    var row = ({row.Name.Replace(" ", "")})Model.Content;");
