@@ -105,6 +105,8 @@ namespace QuickBlocks.Services
                 var rowName = rowNode.GetAttributeValue(name, "");
                 var settingsName = rowNode.GetAttributeValue("data-settings-name", "");
                 var hasSettingsValue = rowNode.GetAttributeValue("data-has-settings", "true");
+                var iconClass = rowNode.GetAttributeValue("data-icon-class", "icon-science");
+                var iconColour = rowNode.GetAttributeValue("data-icon-colour", "color-indigo");
 
                 bool.TryParse(hasSettingsValue, out var hasSettings);
 
@@ -112,7 +114,9 @@ namespace QuickBlocks.Services
 
                 bool.TryParse(ignoreNamingConventionValue, out var ignoreNamingConvention);
 
-                var row = new RowModel(_shortStringHelper, rowName, rowNode, settingsName, hasSettings, ignoreNamingConvention);
+                var row = new RowModel(_shortStringHelper, rowName, rowNode, 
+                    settingsName, hasSettings, ignoreNamingConvention, 
+                    iconClass: string.Join(" ", (new List<string>() { iconClass, iconColour }).Where(x => !string.IsNullOrWhiteSpace(x))));
 
                 var properties = GetProperties(rowNode, isNestedList ? "item" : "row");
                 row.Properties = properties;
