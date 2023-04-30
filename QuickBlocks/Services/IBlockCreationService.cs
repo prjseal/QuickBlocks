@@ -1,4 +1,6 @@
-﻿using Microsoft.AspNetCore.Hosting;
+﻿using HtmlAgilityPack;
+
+using Microsoft.AspNetCore.Hosting;
 using QuickBlocks.Models;
 using System;
 using System.Collections.Generic;
@@ -35,5 +37,7 @@ namespace QuickBlocks.Services
         int CreateSupportingDataTypes();
 
         void CreateSupportingContentTypes(int parentId);
+
+        void RemoveAllQuickBlocksAttributes(HtmlDocument doc);
     }
 }

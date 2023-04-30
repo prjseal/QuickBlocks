@@ -14,6 +14,7 @@ using Umbraco.Cms.Core.Strings;
 using Umbraco.Cms.Core.Services.Implement;
 using Umbraco.Extensions;
 using Microsoft.Extensions.Logging;
+using HtmlAgilityPack;
 
 namespace QuickBlocks.Services
 {
@@ -78,10 +79,94 @@ namespace QuickBlocks.Services
 
                 var spacesToAdd = lastLine.Substring(0, spaces >= 0 ? spaces : 0);
 
-                outputFile.WriteLine(spacesToAdd + row.Html);
+                var doc = new HtmlDocument();
+
+                doc.LoadHtml(row.Html);
+
+                var properties = doc.DocumentNode.SelectNodes("//*[@data-prop-name]");
+
+                foreach (var item in properties)
+                {
+                    var name = item.Attributes["data-prop-name"].Value.Replace(" ","");
+                    var listName = item.Attributes["data-list-name"]?.Value ?? "";
+                    var subListName = item.Attributes["data-sub-list-name"]?.Value ?? "";
+
+                    if(!string.IsNullOrWhiteSpace(listName) || !string.IsNullOrWhiteSpace(subListName))
+                    {
+                        item.InnerHtml = "@Html.GetBlockListHtml(row." + name + ")";
+                        RemoveAllQuickBlocksAttributes(doc);
+                        outputFile.WriteLine(spacesToAdd + doc.DocumentNode.OuterHtml);
+                        return true;
+                    }
+
+                    var text = HtmlTextNode.CreateNode("@row." + name);
+                    switch (item.OriginalName)
+                    {
+                        case "h1":
+                        case "h2":
+                        case "h3":
+                        case "h4":
+                        case "h5":
+                        case "h6":
+                            item.InnerHtml = "@row." + name;
+                            break;
+                        case "img":
+                            if (item.Attributes.Contains("src"))
+                            {
+                                item.Attributes["src"].Value = "@row." + name + ".Url()";
+                            }
+                            else
+                            {
+                                item.Attributes.Add("src", "@row." + name + ".Url()");
+                            }
+                            break;
+                        case "p":
+                            item.ParentNode.ReplaceChild(text, item);
+                            break;
+                        case "a":
+                            if (item.Attributes.Contains("href"))
+                            {
+                                item.Attributes["href"].Value = "@row." + name + ".Url";
+                            }
+                            else
+                            {
+                                item.Attributes.Add("href", "@row." + name + ".Url");
+                            }
+
+                            if (item.Attributes.Contains("target"))
+                            {
+                                item.Attributes["target"].Value = "@row." + name + ".Target";
+                            }
+                            else
+                            {
+                                item.Attributes.Add("target", "@row." + name + ".Target");
+                            }
+                            item.InnerHtml = "@row." + name + ".Name";
+                            break;
+                    }
+                }
+
+                RemoveAllQuickBlocksAttributes(doc);
+
+                outputFile.WriteLine(spacesToAdd + doc.DocumentNode.OuterHtml);
             }
 
             return true;
+        }
+
+        public void RemoveAllQuickBlocksAttributes(HtmlDocument doc)
+        {
+            foreach (var node in doc.DocumentNode.DescendantNodesAndSelf())
+            {
+                node.Attributes.RemoveAll(x =>
+                    x.Name.StartsWith("data-prop")
+                        || x.Name.StartsWith("data-row")
+                        || x.Name.StartsWith("data-icon")
+                        || x.Name.StartsWith("data-sub-list")
+                        || x.Name.StartsWith("data-list")
+                        || x.Name.StartsWith("data-content-type")
+                        || x.Name.StartsWith("data-item"));
+            }
         }
 
         public void CreateList(BlockListModel list, FolderStructure folderStructure, int parentDataTypeId)

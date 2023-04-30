@@ -12,6 +12,8 @@ using System.Text;
 using Umbraco.Cms.Core.Models;
 using Umbraco.Cms.Core.Services;
 using Umbraco.Cms.Web.BackOffice.Controllers;
+using static System.Net.Mime.MediaTypeNames;
+using static Umbraco.Cms.Core.Constants.HttpContext;
 
 namespace QuickBlocks.Controllers
 {
@@ -87,7 +89,22 @@ namespace QuickBlocks.Controllers
 
                 var masterTemplate = _fileService.CreateTemplateWithIdentity("Master", "master", doc.Text);
 
-                masterTemplate.Content = masterTemplate.Content + Environment.NewLine + doc.Text;
+                var masterDoc = new HtmlDocument();
+
+                masterDoc.LoadHtml(doc.DocumentNode.OuterHtml);
+
+                var listProperties = masterDoc.DocumentNode.SelectNodes("//*[@data-list-name]");
+
+                foreach(var property in listProperties)
+                {
+                    var itemName = property.Attributes["data-list-name"].Value;
+                    var textNode = HtmlTextNode.CreateNode("@RenderBody()");
+                    property.ParentNode.ReplaceChild(textNode, property);
+                }
+
+                _blockCreationService.RemoveAllQuickBlocksAttributes(masterDoc);
+
+                masterTemplate.Content = masterTemplate.Content + Environment.NewLine + masterDoc.DocumentNode.OuterHtml;
                 _fileService.SaveTemplate((masterTemplate));
                 
                 var tryCreateTemplate = _fileService.CreateTemplateForContentType("homePage", "Home Page");
