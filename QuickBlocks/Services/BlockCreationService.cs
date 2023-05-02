@@ -30,11 +30,12 @@ namespace QuickBlocks.Services
         private readonly PropertyEditorCollection _propertyEditorCollection;
         private readonly IContentTypeService _contentTypeService;
         private readonly ILogger<BlockCreationService> _logger;
+        private readonly IFileService _fileService;
 
-        public BlockCreationService(IShortStringHelper shortStringHelper, IWebHostEnvironment webHostEnvironment, 
-            IDataTypeService dataTypeService, IConfigurationEditorJsonSerializer configurationEditorJsonSerializer, 
-            PropertyEditorCollection propertyEditorCollection, IContentTypeService contentTypeService, 
-            ILogger<BlockCreationService> logger)
+        public BlockCreationService(IShortStringHelper shortStringHelper, IWebHostEnvironment webHostEnvironment,
+            IDataTypeService dataTypeService, IConfigurationEditorJsonSerializer configurationEditorJsonSerializer,
+            PropertyEditorCollection propertyEditorCollection, IContentTypeService contentTypeService,
+            ILogger<BlockCreationService> logger, IFileService fileService)
         {
             _shortStringHelper = shortStringHelper;
             _webHostEnvironment = webHostEnvironment;
@@ -43,6 +44,7 @@ namespace QuickBlocks.Services
             _propertyEditorCollection = propertyEditorCollection;
             _contentTypeService = contentTypeService;
             _logger = logger;
+            _fileService = fileService;
         }
 
         public bool CreateRowPartial(RowModel row)
@@ -486,6 +488,29 @@ namespace QuickBlocks.Services
                     }
                     _contentTypeService.Save(contentType);
                 }
+        }
+
+        public void CreatePartialViews(List<PartialViewModel> partialViews)
+        {
+            if(partialViews == null) return;
+
+            foreach (var partialView in partialViews)
+            {
+                var fileName = $"{partialView.Name}.cshtml";
+
+                var tryCreatePartialView = _fileService.CreatePartialView(new PartialView(PartialViewType.PartialView, "/Views/Partials/" + fileName));
+                if(tryCreatePartialView.Success)
+                {
+                    var file = tryCreatePartialView.Result;
+                    if(file != null)
+                    {
+                        var content = "@inherits Umbraco.Cms.Web.Common.Views.UmbracoViewPage" + Environment.NewLine + Environment.NewLine;
+                        content += partialView.Html;
+                        file.Content = content;
+                    }
+                    _fileService.SavePartialView(file);
+                }
+            }
         }
     }
 }

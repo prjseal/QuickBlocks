@@ -11,5 +11,6 @@ namespace QuickBlocks.Services
         List<BlockItemModel> GetBlocks(HtmlNode node, string rowName);
         List<PropertyModel> GetProperties(HtmlNode node, string location);
         ContentTypeModel GetContentType(HtmlNode node);
+        List<PartialViewModel> GetPartialViews(HtmlNode node);
     }
 }

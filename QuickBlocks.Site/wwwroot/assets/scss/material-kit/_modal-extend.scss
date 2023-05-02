@@ -1,0 +1,113 @@
+.modal-login{
+    max-width: 360px;
+
+    .modal-header{
+        .close{
+            color: $white-color;
+            top: -25px;
+            right: 34px;
+            text-shadow: none;
+            position: absolute;
+        }
+
+        .card-header {
+          width: 100%;
+
+          .social-line {
+            margin-top: 1rem;
+            text-align: center;
+            padding: 0;
+
+            .btn {
+              color: $white-color;
+              margin-left: 5px;
+              margin-right: 5px
+            }
+          }
+        }
+    }
+
+    .modal-footer{
+        padding-bottom: 0;
+        padding-top: 0;
+    }
+
+    .modal-body{
+        padding-left: 4px;
+        padding-bottom: 0;
+        padding-top: 0;
+
+      .form .description{
+        padding-top: 15px;
+        margin-bottom: -10px;
+      }
+    }
+
+    .card-signup{
+        margin-bottom: 0;
+    }
+}
+
+.modal-signup{
+    max-width: 900px;
+
+    .info-horizontal{
+        padding: 0px 0px 20px;
+    }
+
+    .modal-title{
+        text-align: center;
+        width: 100%;
+    }
+
+    .modal-footer{
+        padding: 0 5px;
+    }
+
+    .modal-header{
+      padding-top: 0;
+
+      .close {
+        margin-top: -35px;
+      }
+    }
+
+    .card-signup{
+      padding: 40px 0;
+      margin-bottom: 0;
+
+      .form-check {
+        margin-left: 20px;
+        padding-top: 27px;
+
+        .form-check-label {
+          padding-left: 35px;
+        }
+      }
+    }
+
+    .modal-body{
+        padding-bottom: 0;
+        padding-top: 0;
+    }
+}
+
+.modal-notice {
+    .instruction{
+         margin-bottom: 25px;
+    }
+    .picture{
+        max-width: 150px;
+    }
+
+    .modal-content{
+        .btn-raised{
+            margin-bottom: 15px;
+        }
+    }
+}
+
+.modal-small{
+    width: 300px;
+    margin: 0 auto;
+}

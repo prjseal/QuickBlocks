@@ -222,5 +222,25 @@ namespace QuickBlocks.Services
 
             return null;
         }
+
+        public List<PartialViewModel> GetPartialViews(HtmlNode node)
+        {
+            var partialViews = new List<PartialViewModel>();
+
+            var descendants = node.Descendants();
+            if (descendants == null || !descendants.Any()) return null;
+
+            foreach (var descendant in descendants)
+            {
+                var itemName = descendant.GetAttributeValue("data-partial-name", "");
+                if (!string.IsNullOrWhiteSpace(itemName))
+                {
+                    var item = new PartialViewModel(itemName, descendant);
+                    partialViews.Add(item);
+                }
+            }
+
+            return partialViews;
+        }
     }
 }

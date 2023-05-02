@@ -1,0 +1,98 @@
+// /*!
+
+ // =========================================================
+ // * Material Kit Pro - v2.2.1
+ // =========================================================
+ //
+ // * Product Page: https://www.creative-tim.com/product/material-kit-pro
+ // * Copyright 2022 Creative Tim (http://www.creative-tim.com)
+ //
+ // =========================================================
+ //
+ // * The above copyright notice and this permission notice shall be included in all copies or substantial portions of the Software.
+ //
+ // */
+
+@import 'material-kit/variables';
+@import 'material-kit/mixins';
+@import 'material-kit/core-bootstrap';
+@import 'material-kit/reboot';
+
+// Core Components
+@import 'material-kit/layout';
+@import 'material-kit/buttons';
+@import 'material-kit/misc';
+@import 'material-kit/misc-extend';
+@import 'material-kit/checkboxes';
+@import 'material-kit/custom-forms';
+@import 'material-kit/switches';
+@import 'material-kit/radios';
+@import 'material-kit/carousel';
+@import 'material-kit/forms';
+@import 'material-kit/input-group';
+@import 'material-kit/list-group';
+@import 'material-kit/nav';
+@import 'material-kit/headers';
+@import 'material-kit/footers';
+@import 'material-kit/images';
+@import 'material-kit/navbar';
+@import 'material-kit/badges';
+@import 'material-kit/alerts';
+@import 'material-kit/pagination';
+@import 'material-kit/pills';
+@import 'material-kit/info-areas';
+@import 'material-kit/type';
+@import 'material-kit/tabs';
+@import 'material-kit/tooltip';
+@import 'material-kit/popover';
+@import 'material-kit/modal';
+@import 'material-kit/modal-extend';
+@import 'material-kit/dropdown';
+@import 'material-kit/drawer';
+@import 'material-kit/progress';
+@import 'material-kit/togglebutton';
+@import 'material-kit/ripples';
+@import 'material-kit/social-buttons';
+@import 'material-kit/fileupload';
+@import 'material-kit/tables';
+@import 'material-kit/sections';
+@import 'material-kit/media';
+
+// Cards
+@import 'material-kit/cards';
+@import 'material-kit/cards/card-carousel';
+@import 'material-kit/cards/card-login';
+@import 'material-kit/cards/card-plain';
+@import 'material-kit/cards/card-background';
+@import 'material-kit/cards/card-blog';
+@import 'material-kit/cards/card-collapse';
+@import 'material-kit/cards/card-contact';
+@import 'material-kit/cards/card-form-horizontal';
+@import 'material-kit/cards/card-pricing';
+@import 'material-kit/cards/card-product';
+@import 'material-kit/cards/card-profile';
+@import 'material-kit/cards/card-rotate';
+@import 'material-kit/cards/card-testimonials';
+
+//Plugins
+@import 'material-kit/plugins/plugin-datetime-picker';
+@import 'material-kit/plugins/plugin-nouislider';
+@import 'material-kit/plugins/plugin-bootstrap-select';
+@import 'material-kit/plugins/plugin-flexisel';
+@import 'material-kit/plugins/plugin-tagsinput';
+
+// Sections and Example pages for PRO
+
+@import 'material-kit/example-pages-extend';
+@import 'material-kit/sections/headers-extend';
+@import 'material-kit/sections/footers-extend';
+@import 'material-kit/sections/social-subscribe-lines';
+@import 'material-kit/sections/features';
+@import 'material-kit/sections/team';
+@import 'material-kit/sections/pricing';
+@import 'material-kit/sections/blogs';
+@import 'material-kit/sections/projects';
+@import 'material-kit/sections/testimonials';
+@import 'material-kit/sections/contactus';
+
+@import 'material-kit/responsive';

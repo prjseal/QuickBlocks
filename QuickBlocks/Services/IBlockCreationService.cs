@@ -39,5 +39,7 @@ namespace QuickBlocks.Services
         void CreateSupportingContentTypes(int parentId);
 
         void RemoveAllQuickBlocksAttributes(HtmlDocument doc);
+
+        void CreatePartialViews(List<PartialViewModel> partialViews);
     }
 }

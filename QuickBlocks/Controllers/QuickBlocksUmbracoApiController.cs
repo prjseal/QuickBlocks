@@ -59,6 +59,12 @@ namespace QuickBlocks.Controllers
                 doc.Load(quickBlocksInstruction.Url);
             }
 
+            var partialViews = _blockParsingService.GetPartialViews(doc.DocumentNode);
+
+            _blockCreationService.CreatePartialViews(partialViews);
+
+            return new List<BlockListModel>();
+
             var folderStructure = _blockCreationService.CreateFolderStructure();
             var parentDataTypeId = _blockCreationService.CreateSupportingDataTypes();
             _blockCreationService.CreateSupportingContentTypes(folderStructure.CompositionsSettingsModelsId);
