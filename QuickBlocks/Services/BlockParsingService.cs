@@ -15,14 +15,18 @@ namespace QuickBlocks.Services
             _shortStringHelper = shortStringHelper;
         }
 
-        public List<BlockListModel> GetLists(HtmlNode node, bool isNestedList, string prefix = "[BlockList]")
+        public List<BlockListModel> GetLists(string html, bool isNestedList, string prefix = "[BlockList]")
         {
+            var doc = new HtmlDocument();
+
+            doc.LoadHtml(html);
+
             var xpath = isNestedList ? "//*[@data-sub-list-name]" : "//*[@data-list-name]";
             var name = isNestedList ? "data-sub-list-name" : "data-list-name";
 
             var lists = new List<BlockListModel>();
 
-            var listNodes = node.SelectNodes(xpath);
+            var listNodes = doc.DocumentNode.SelectNodes(xpath);
 
             if (listNodes == null || !listNodes.Any()) return lists;
 
@@ -78,10 +82,7 @@ namespace QuickBlocks.Services
                     list.ValidationLimitMax = max;
                 }
 
-
-
-                var rows = this.GetRows(listNode, isNestedList);
-                list.Rows = rows;
+                list.Html = listNode.OuterHtml;
 
                 lists.Add(list);
             }
@@ -89,14 +90,18 @@ namespace QuickBlocks.Services
             return lists;
         }
 
-        public List<RowModel> GetRows(HtmlNode node, bool isNestedList)
+        public List<RowModel> GetRows(string html, bool isNestedList)
         {
+            var doc = new HtmlDocument();
+
+            doc.LoadHtml(html);
+
             var xpath = isNestedList ? "//*[@data-item-name]" : "//*[@data-row-name]";
             var name = isNestedList ? "data-item-name" : "data-row-name";
 
             var rows = new List<RowModel>();
 
-            var rowNodes = node.SelectNodes(xpath);
+            var rowNodes = doc.DocumentNode.SelectNodes(xpath);
 
             if (rowNodes == null || !rowNodes.Any()) return rows;
 
@@ -118,7 +123,7 @@ namespace QuickBlocks.Services
                     settingsName, hasSettings, ignoreNamingConvention, 
                     iconClass: string.Join(" ", (new List<string>() { iconClass, iconColour }).Where(x => !string.IsNullOrWhiteSpace(x))));
 
-                var properties = GetProperties(rowNode, isNestedList ? "item" : "row");
+                var properties = GetProperties(rowNode.OuterHtml, isNestedList ? "item" : "row");
                 row.Properties = properties;
 
                 rows.Add(row);
@@ -127,11 +132,15 @@ namespace QuickBlocks.Services
             return rows;
         }
 
-        public List<BlockItemModel> GetBlocks(HtmlNode node, string rowName)
+        public List<BlockItemModel> GetBlocks(string html, string rowName)
         {
+            var doc = new HtmlDocument();
+
+            doc.LoadHtml(html);
+
             var blocks = new List<BlockItemModel>();
 
-            var descendants = node.Descendants();
+            var descendants = doc.DocumentNode.Descendants();
             if (descendants == null || !descendants.Any()) return blocks;
 
             foreach (var descendant in descendants)
@@ -141,7 +150,7 @@ namespace QuickBlocks.Services
                 {
                     var item = new BlockItemModel(_shortStringHelper, itemName, descendant);
 
-                    var properties = GetProperties(descendant, "item");
+                    var properties = GetProperties(descendant.OuterHtml, "item");
                     item.Properties = properties;
 
                     blocks.Add(item);
@@ -151,11 +160,15 @@ namespace QuickBlocks.Services
             return blocks;
         }
 
-        public List<PropertyModel> GetProperties(HtmlNode node, string context)
+        public List<PropertyModel> GetProperties(string html, string context)
         {
+            var doc = new HtmlDocument();
+
+            doc.LoadHtml(html);
+
             var properties = new List<PropertyModel>();
 
-            var descendants = node.Descendants();
+            var descendants = doc.DocumentNode.Descendants();
             if (descendants == null || !descendants.Any()) return properties;
 
             foreach (var descendant in descendants)
@@ -215,7 +228,7 @@ namespace QuickBlocks.Services
                 var itemName = descendant.GetAttributeValue("data-content-type-name", "");
                 if (!string.IsNullOrWhiteSpace(itemName))
                 {
-                    var item = new ContentTypeModel(_shortStringHelper, itemName);
+                    var item = new ContentTypeModel(_shortStringHelper, itemName, descendant.OuterHtml);
                     return item;
                 }
             }

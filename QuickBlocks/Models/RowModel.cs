@@ -17,6 +17,7 @@ namespace QuickBlocks.Models
         public bool HasSettings { get; set; }
         public string Html { get; set; }
         public string IconClass { get; set; }
+        public List<BlockListModel> SubLists { get; set; }
 
         public RowModel(IShortStringHelper shortStringHelper, string name, HtmlNode node, 
             string settingsName, bool hasSettings = true, bool ignoreNamingConvention = false, 

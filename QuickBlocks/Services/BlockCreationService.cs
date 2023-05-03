@@ -167,7 +167,8 @@ namespace QuickBlocks.Services
                         || x.Name.StartsWith("data-sub-list")
                         || x.Name.StartsWith("data-list")
                         || x.Name.StartsWith("data-content-type")
-                        || x.Name.StartsWith("data-item"));
+                        || x.Name.StartsWith("data-item")
+                        || x.Name.StartsWith("data-partial"));
             }
         }
 
@@ -497,15 +498,23 @@ namespace QuickBlocks.Services
             foreach (var partialView in partialViews)
             {
                 var fileName = $"{partialView.Name}.cshtml";
-
                 var tryCreatePartialView = _fileService.CreatePartialView(new PartialView(PartialViewType.PartialView, "/Views/Partials/" + fileName));
                 if(tryCreatePartialView.Success)
                 {
                     var file = tryCreatePartialView.Result;
                     if(file != null)
                     {
+                        var partialDoc = new HtmlDocument();
+
+                        partialDoc.LoadHtml(partialView.Html);
+
+                        RemoveAllQuickBlocksAttributes(partialDoc);
+
                         var content = "@inherits Umbraco.Cms.Web.Common.Views.UmbracoViewPage" + Environment.NewLine + Environment.NewLine;
-                        content += partialView.Html;
+                        content += partialDoc.DocumentNode.OuterHtml;
+
+
+                        content = 
                         file.Content = content;
                     }
                     _fileService.SavePartialView(file);

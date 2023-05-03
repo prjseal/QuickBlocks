@@ -14,6 +14,7 @@ using Umbraco.Cms.Core.Services;
 using Umbraco.Cms.Web.BackOffice.Controllers;
 using static System.Net.Mime.MediaTypeNames;
 using static Umbraco.Cms.Core.Constants.HttpContext;
+using NUglify.JavaScript.Syntax;
 
 namespace QuickBlocks.Controllers
 {
@@ -63,15 +64,40 @@ namespace QuickBlocks.Controllers
 
             _blockCreationService.CreatePartialViews(partialViews);
 
-            return new List<BlockListModel>();
-
             var folderStructure = _blockCreationService.CreateFolderStructure();
             var parentDataTypeId = _blockCreationService.CreateSupportingDataTypes();
             _blockCreationService.CreateSupportingContentTypes(folderStructure.CompositionsSettingsModelsId);
 
-            var lists = _blockParsingService.GetLists(doc.DocumentNode, true);
+            var contentType = _blockParsingService.GetContentType(doc.DocumentNode);
 
-            lists.AddRange(_blockParsingService.GetLists(doc.DocumentNode, false));
+            var lists = _blockParsingService.GetLists(contentType.Html, false);
+
+            foreach(var list in lists)
+            {
+                var rows = _blockParsingService.GetRows(list.Html, false);
+                foreach(var row in rows)
+                {
+                    var sublists = _blockParsingService.GetLists(row.Html, true);
+
+                    foreach(var sublist in sublists)
+                    {
+                        var subRows = _blockParsingService.GetRows(list.Html, true);
+                        foreach (var subRow in sublist.Rows)
+                        {
+                            var subRowProperties = _blockParsingService.GetProperties(subRow.Html, "");
+                            subRow.Properties = subRowProperties;
+                        }
+
+                    }
+                    var rowProperties = _blockParsingService.GetProperties(row.Html, "row");
+                    row.Properties = rowProperties;
+
+                    row.SubLists = sublists;
+                }
+                list.Rows = rows;
+            }
+
+            return lists;
 
             if (!lists.Any()) return lists;
 
@@ -80,14 +106,11 @@ namespace QuickBlocks.Controllers
                 _blockCreationService.CreateList(list, folderStructure, parentDataTypeId);
             }
 
-
-            var contentType = _blockParsingService.GetContentType(doc.DocumentNode);
-
             if(contentType != null)
             {
                 var newContentType = _blockCreationService.CreateContentType(contentType.Name, contentType.Alias, folderStructure.PagesId, false, false, iconClass: "icon-home", true);
 
-                var properties = _blockParsingService.GetProperties(doc.DocumentNode, "page");
+                var properties = _blockParsingService.GetProperties(doc.DocumentNode.OuterHtml, "page");
 
                 if(newContentType != null && properties != null && properties.Any()) { 
                     _blockCreationService.AddPropertiesToContentType(newContentType, properties, "Content");
