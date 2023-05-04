@@ -9,16 +9,18 @@
                         on-tab-change="vm.changeTab(tab)">
                 </umb-tabs-nav>
 
-                <umb-tab-content
-                        ng-repeat="tab in vm.tabs"
-                        ng-show="tab.active"
-                        tab="tab">
+                <umb-tab-content ng-repeat="tab in vm.tabs"
+                                 ng-show="tab.active"
+                                 tab="tab">
                     <div ng-if="tab.alias === 'htmlSnippet'">
                         <div umb-ace-editor="vm.htmlEditorOptions" model="model.htmlbody" ng-readonly="false"></div>
                     </div>
                     <div ng-if="tab.alias === 'fetchUrl'">
                         <label class="control-label" for="Url"><span>URL</span></label>
                         <input no-dirty-check class="input-block-level" style="width:300px" type="text" ng-model="model.url" name="Url" id="Url" placeholder="e.g. index.html" />
+                    </div>
+                    <div ng-if="tab.alias === 'report'">
+                        <pre no-dirty-check style="width:100%; height:70vh">{{model.report | json}}</pre>
                     </div>
                 </umb-tab-content>
 

@@ -12,7 +12,8 @@
                         'Content-Type': 'application/json'
                     }
                 }).then(function (response) {
-                console.log(response);
+                    $scope.model.report = response.data;
+                console.log(response.data);
                 notificationsService.success('QuickBlocks', 'Your Block List has been created successfully');
 
             }, function (response) {
@@ -36,6 +37,10 @@
             {
                 "alias": "fetchUrl",
                 "label": "Fetch URL"
+            },
+            {
+                "alias": "report",
+                "label": "Report"
             }
         ];
 

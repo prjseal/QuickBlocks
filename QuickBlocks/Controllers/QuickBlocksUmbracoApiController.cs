@@ -42,7 +42,7 @@ namespace QuickBlocks.Controllers
 
         //https://localhost:44306/umbraco/backoffice/api/quickblocksapi/build/
         [HttpPost]
-        public ActionResult<IEnumerable<BlockListModel>> Build(QuickBlocksInstruction quickBlocksInstruction)
+        public ActionResult<ContentTypeModel> Build(QuickBlocksInstruction quickBlocksInstruction)
         {
             if (quickBlocksInstruction == null ||
                 (string.IsNullOrWhiteSpace(quickBlocksInstruction.Url ?? "")
@@ -75,31 +75,34 @@ namespace QuickBlocks.Controllers
             foreach(var list in lists)
             {
                 var rows = _blockParsingService.GetRows(list.Html, false);
+                list.Rows = rows;
                 foreach(var row in rows)
                 {
                     var sublists = _blockParsingService.GetLists(row.Html, true);
-
-                    foreach(var sublist in sublists)
+                    row.SubLists = sublists;
+                    foreach(var sublist in row.SubLists)
                     {
-                        var subRows = _blockParsingService.GetRows(list.Html, true);
+                        var subRows = _blockParsingService.GetRows(sublist.Html, true);
+                        sublist.Rows = subRows;
                         foreach (var subRow in sublist.Rows)
                         {
                             var subRowProperties = _blockParsingService.GetProperties(subRow.Html, "");
                             subRow.Properties = subRowProperties;
                         }
-
                     }
                     var rowProperties = _blockParsingService.GetProperties(row.Html, "row");
                     row.Properties = rowProperties;
-
-                    row.SubLists = sublists;
                 }
-                list.Rows = rows;
             }
 
-            return lists;
+            var pageProperties = _blockParsingService.GetProperties(contentType.Html, "page");
+            contentType.Properties = pageProperties;
 
-            if (!lists.Any()) return lists;
+            contentType.Lists = lists;
+
+            return contentType;
+
+            if (!lists.Any()) return contentType;
 
             foreach (var list in lists)
             {
@@ -167,7 +170,7 @@ namespace QuickBlocks.Controllers
                 
             }
 
-            return lists;
+            return contentType;
         }
     }
 }
