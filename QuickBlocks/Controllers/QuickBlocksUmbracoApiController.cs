@@ -60,10 +60,6 @@ namespace QuickBlocks.Controllers
                 doc.Load(quickBlocksInstruction.Url);
             }
 
-            var partialViews = _blockParsingService.GetPartialViews(doc.DocumentNode);
-
-            _blockCreationService.CreatePartialViews(partialViews);
-
             var folderStructure = _blockCreationService.CreateFolderStructure();
             var parentDataTypeId = _blockCreationService.CreateSupportingDataTypes();
             _blockCreationService.CreateSupportingContentTypes(folderStructure.CompositionsSettingsModelsId);
@@ -89,9 +85,18 @@ namespace QuickBlocks.Controllers
                             var subRowProperties = _blockParsingService.GetProperties(subRow.Html, "");
                             subRow.Properties = subRowProperties;
                         }
+
+                        if (!quickBlocksInstruction.ReadOnly)
+                        {
+                            _blockCreationService.CreateList(sublist, folderStructure, parentDataTypeId);
+                        }
                     }
                     var rowProperties = _blockParsingService.GetProperties(row.Html, "row");
                     row.Properties = rowProperties;
+                }
+                if(!quickBlocksInstruction.ReadOnly)
+                {
+                    _blockCreationService.CreateList(list, folderStructure, parentDataTypeId);
                 }
             }
 
@@ -100,7 +105,10 @@ namespace QuickBlocks.Controllers
 
             contentType.Lists = lists;
 
-            return contentType;
+            if(quickBlocksInstruction.ReadOnly) return contentType;
+
+            var partialViews = _blockParsingService.GetPartialViews(doc.DocumentNode);
+            _blockCreationService.CreatePartialViews(partialViews);
 
             if (!lists.Any()) return contentType;
 
@@ -113,10 +121,8 @@ namespace QuickBlocks.Controllers
             {
                 var newContentType = _blockCreationService.CreateContentType(contentType.Name, contentType.Alias, folderStructure.PagesId, false, false, iconClass: "icon-home", true);
 
-                var properties = _blockParsingService.GetProperties(doc.DocumentNode.OuterHtml, "page");
-
-                if(newContentType != null && properties != null && properties.Any()) { 
-                    _blockCreationService.AddPropertiesToContentType(newContentType, properties, "Content");
+                if(newContentType != null && contentType.Properties != null && contentType.Properties.Any()) { 
+                    _blockCreationService.AddPropertiesToContentType(newContentType, contentType.Properties, "Content");
                 }
 
                 var masterTemplate = _fileService.CreateTemplateWithIdentity("Master", "master", doc.Text);
@@ -125,16 +131,18 @@ namespace QuickBlocks.Controllers
 
                 masterDoc.LoadHtml(doc.DocumentNode.OuterHtml);
 
-                var listProperties = masterDoc.DocumentNode.SelectNodes("//*[@data-list-name]");
+                var mainBody = masterDoc.DocumentNode.SelectNodes("//*[@data-content-type-name]").FirstOrDefault();
 
-                foreach(var property in listProperties)
+                if(mainBody != null)
                 {
-                    var itemName = property.Attributes["data-list-name"].Value;
                     var textNode = HtmlTextNode.CreateNode("@RenderBody()");
-                    property.ParentNode.ReplaceChild(textNode, property);
+                    mainBody.ParentNode.ReplaceChild(textNode, mainBody);
                 }
 
+                _blockCreationService.ReplaceAllPartialAttributesWithCalls(masterDoc);
+
                 _blockCreationService.RemoveAllQuickBlocksAttributes(masterDoc);
+
 
                 masterTemplate.Content = masterTemplate.Content + Environment.NewLine + masterDoc.DocumentNode.OuterHtml;
                 _fileService.SaveTemplate((masterTemplate));

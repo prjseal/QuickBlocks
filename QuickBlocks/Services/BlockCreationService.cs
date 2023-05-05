@@ -90,10 +90,25 @@ namespace QuickBlocks.Services
                 foreach (var item in properties)
                 {
                     var name = item.Attributes["data-prop-name"].Value.Replace(" ","");
+                    var propValue = item.Attributes["data-prop-value"]?.Value ?? "";
                     var listName = item.Attributes["data-list-name"]?.Value ?? "";
                     var subListName = item.Attributes["data-sub-list-name"]?.Value ?? "";
+                    var replaceMarker = item.Attributes["data-replace-marker"]?.Value ?? "";
+                    var replaceAttribute = item.Attributes["data-replace-attribute"]?.Value ?? "";
+                    var replaceInner = item.Attributes["data-replace-inner"]?.Value ?? "";
 
-                    if(!string.IsNullOrWhiteSpace(listName) || !string.IsNullOrWhiteSpace(subListName))
+                    if (!string.IsNullOrWhiteSpace(replaceMarker))
+                    {
+                        var attributeValue = item.Attributes[replaceAttribute]?.Value ?? "";
+                        if(!string.IsNullOrWhiteSpace(attributeValue))
+                        {
+                            var newAttributeValue = attributeValue.Replace(replaceMarker, "@row." + name + (!string.IsNullOrWhiteSpace(propValue) ? propValue : ""));
+                            item.Attributes[replaceAttribute].Value = newAttributeValue;
+                        }
+                        continue;
+                    }
+
+                    if (!string.IsNullOrWhiteSpace(listName) || !string.IsNullOrWhiteSpace(subListName))
                     {
                         item.InnerHtml = "@Html.GetBlockListHtml(row." + name + ")";
                         RemoveAllQuickBlocksAttributes(doc);
@@ -143,7 +158,11 @@ namespace QuickBlocks.Services
                             {
                                 item.Attributes.Add("target", "@row." + name + ".Target");
                             }
-                            item.InnerHtml = "@row." + name + ".Name";
+
+                            if(replaceInner == "true")
+                            {
+                                item.InnerHtml = "@row." + name + ".Name";
+                            }
                             break;
                     }
                 }
@@ -169,6 +188,24 @@ namespace QuickBlocks.Services
                         || x.Name.StartsWith("data-content-type")
                         || x.Name.StartsWith("data-item")
                         || x.Name.StartsWith("data-partial"));
+            }
+        }
+
+        public void ReplaceAllPartialAttributesWithCalls(HtmlDocument doc)
+        {
+            var partials = doc.DocumentNode.SelectNodes("//*[@data-partial-name]");
+
+            if(partials != null && partials.Any())
+            {
+                foreach(var partial in partials)
+                {
+                    var itemName = partial.GetAttributeValue("data-partial-name", "");
+                    if(!string.IsNullOrWhiteSpace("itemName"))
+                    {
+                        var text = HtmlTextNode.CreateNode("@await Html.PartialAsync(\"~/Views/Partials/" + itemName + ".cshtml\")");
+                        partial.ParentNode.ReplaceChild(text, partial);
+                    }
+                }
             }
         }
 
@@ -292,7 +329,7 @@ namespace QuickBlocks.Services
             {
                 ContentElementTypeKey = contentDocType.Key,
                 SettingsElementTypeKey = settingsDocType?.Key ?? null,
-                Label = "{{ !title || title == '' ? '" + row.Name + " ' + $index : title }}",
+                Label = "{{ !" + row.LabelProperty + " || " + row.LabelProperty + " == '' ? '" + row.Name + "' : " + row.LabelProperty + " }}",
                 EditorSize = DefaultEditorSize,
                 ForceHideContentEditorInOverlay = false,
                 Stylesheet = null,

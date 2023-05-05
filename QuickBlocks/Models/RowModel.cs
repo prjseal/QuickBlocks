@@ -18,10 +18,11 @@ namespace QuickBlocks.Models
         public string Html { get; set; }
         public string IconClass { get; set; }
         public List<BlockListModel> SubLists { get; set; }
+        public string LabelProperty { get; set; }
 
         public RowModel(IShortStringHelper shortStringHelper, string name, HtmlNode node, 
             string settingsName, bool hasSettings = true, bool ignoreNamingConvention = false, 
-            string suffix = "Row", string settingsSuffix = "Settings", string iconClass = "icon-science")
+            string suffix = "Row", string settingsSuffix = "Settings", string iconClass = "icon-science", string labelProperty = "Title")
         {
             IgnoreNamingConvention = ignoreNamingConvention;
             HasSettings = hasSettings;
@@ -41,6 +42,7 @@ namespace QuickBlocks.Models
             SettingsAlias = hasSettings ? SettingsName.Replace(" ", "").ToSafeAlias(shortStringHelper, true) : "";
             Html = node.OuterHtml;
             IconClass = iconClass;
+            LabelProperty = labelProperty.Replace(" ", "").ToSafeAlias(shortStringHelper, true);
         }
     }
 }

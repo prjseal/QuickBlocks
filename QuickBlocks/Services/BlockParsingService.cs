@@ -112,6 +112,7 @@ namespace QuickBlocks.Services
                 var hasSettingsValue = rowNode.GetAttributeValue("data-has-settings", "true");
                 var iconClass = rowNode.GetAttributeValue("data-icon-class", "icon-science");
                 var iconColour = rowNode.GetAttributeValue("data-icon-colour", "color-indigo");
+                var labelProperty = rowNode.GetAttributeValue("data-label-property", "title");
 
                 bool.TryParse(hasSettingsValue, out var hasSettings);
 
@@ -121,7 +122,8 @@ namespace QuickBlocks.Services
 
                 var row = new RowModel(_shortStringHelper, rowName, rowNode, 
                     settingsName, hasSettings, ignoreNamingConvention, 
-                    iconClass: string.Join(" ", (new List<string>() { iconClass, iconColour }).Where(x => !string.IsNullOrWhiteSpace(x))));
+                    iconClass: string.Join(" ", (new List<string>() { iconClass, iconColour }).Where(x => !string.IsNullOrWhiteSpace(x))),
+                    labelProperty: labelProperty);
 
                 var properties = GetProperties(rowNode.OuterHtml, isNestedList ? "item" : "row");
                 row.Properties = properties;
