@@ -10,10 +10,13 @@ public class ContentTypeModel
     public string Alias { get; set; }
     public string ConventionName { get; }
     public IEnumerable<PropertyModel> Properties { get; set; }
+    public IEnumerable<BlockListModel> Lists { get; set; }
+    public string Html { get; set; }
 
-    public ContentTypeModel(IShortStringHelper shortStringHelper, string name)
+    public ContentTypeModel(IShortStringHelper shortStringHelper, string name, string html)
     {
         Name = name;
         Alias = Name.Replace(" ", "").ToSafeAlias(shortStringHelper, true);
+        Html = html;
     }
 }

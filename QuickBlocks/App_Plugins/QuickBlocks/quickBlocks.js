@@ -12,13 +12,32 @@
                         'Content-Type': 'application/json'
                     }
                 }).then(function (response) {
-                console.log(response);
-                notificationsService.success('QuickBlocks', 'Your Block List has been created successfully');
-
+                    $scope.model.report = response.data;
+                    console.log(response.data);
+                    notificationsService.success('QuickBlocks', 'Your Block List has been created successfully');
             }, function (response) {
                 console.log('error');
                 notificationsService.success('QuickBlocks', 'There was an error when trying to process your request. Check the console for more details.');
             });
+
+        };
+
+        $scope.report = function () {
+            apiUrl = Umbraco.Sys.ServerVariables["QuickBlocks"]["QuickBlocksApi"];
+
+            $http.post(apiUrl, JSON.stringify({ Url: $scope.model.url, HtmlBody: $scope.model.htmlbody, ReadOnly: true }),
+                {
+                    headers: {
+                        'Content-Type': 'application/json'
+                    }
+                }).then(function (response) {
+                    $scope.model.report = response.data;
+                    console.log(response.data);
+                    notificationsService.success('QuickBlocks', 'Your Block List has been created successfully');
+                }, function (response) {
+                    console.log('error');
+                    notificationsService.success('QuickBlocks', 'There was an error when trying to process your request. Check the console for more details.');
+                });
 
         };
 
@@ -36,6 +55,10 @@
             {
                 "alias": "fetchUrl",
                 "label": "Fetch URL"
+            },
+            {
+                "alias": "report",
+                "label": "Report"
             }
         ];
 

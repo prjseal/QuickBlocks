@@ -41,5 +41,11 @@ namespace QuickBlocks.Services
         void RemoveAllQuickBlocksAttributes(HtmlDocument doc);
 
         void CreatePartialViews(List<PartialViewModel> partialViews);
+
+        void ReplaceAllPartialAttributesWithCalls(HtmlDocument doc);
+
+        void RenderProperties(HtmlNodeCollection properties, string context);
+
+        void RenderListPropertyCalls(HtmlNodeCollection listProperties, string context);
     }
 }

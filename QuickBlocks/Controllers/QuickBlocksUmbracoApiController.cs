@@ -14,6 +14,7 @@ using Umbraco.Cms.Core.Services;
 using Umbraco.Cms.Web.BackOffice.Controllers;
 using static System.Net.Mime.MediaTypeNames;
 using static Umbraco.Cms.Core.Constants.HttpContext;
+using NUglify.JavaScript.Syntax;
 
 namespace QuickBlocks.Controllers
 {
@@ -41,7 +42,7 @@ namespace QuickBlocks.Controllers
 
         //https://localhost:44306/umbraco/backoffice/api/quickblocksapi/build/
         [HttpPost]
-        public ActionResult<IEnumerable<BlockListModel>> Build(QuickBlocksInstruction quickBlocksInstruction)
+        public ActionResult<ContentTypeModel> Build(QuickBlocksInstruction quickBlocksInstruction)
         {
             if (quickBlocksInstruction == null ||
                 (string.IsNullOrWhiteSpace(quickBlocksInstruction.Url ?? "")
@@ -59,38 +60,69 @@ namespace QuickBlocks.Controllers
                 doc.Load(quickBlocksInstruction.Url);
             }
 
-            var partialViews = _blockParsingService.GetPartialViews(doc.DocumentNode);
-
-            _blockCreationService.CreatePartialViews(partialViews);
-
-            return new List<BlockListModel>();
-
             var folderStructure = _blockCreationService.CreateFolderStructure();
             var parentDataTypeId = _blockCreationService.CreateSupportingDataTypes();
             _blockCreationService.CreateSupportingContentTypes(folderStructure.CompositionsSettingsModelsId);
 
-            var lists = _blockParsingService.GetLists(doc.DocumentNode, true);
+            var contentType = _blockParsingService.GetContentType(doc.DocumentNode);
 
-            lists.AddRange(_blockParsingService.GetLists(doc.DocumentNode, false));
+            var lists = _blockParsingService.GetLists(contentType.Html, false);
 
-            if (!lists.Any()) return lists;
+            foreach(var list in lists)
+            {
+                var rows = _blockParsingService.GetRows(list.Html, false);
+                list.Rows = rows;
+                foreach(var row in rows)
+                {
+                    var sublists = _blockParsingService.GetLists(row.Html, true);
+                    row.SubLists = sublists;
+                    foreach(var sublist in row.SubLists)
+                    {
+                        var subRows = _blockParsingService.GetRows(sublist.Html, true);
+                        sublist.Rows = subRows;
+                        foreach (var subRow in sublist.Rows)
+                        {
+                            var subRowProperties = _blockParsingService.GetProperties(subRow.Html, "");
+                            subRow.Properties = subRowProperties;
+                        }
+
+                        if (!quickBlocksInstruction.ReadOnly)
+                        {
+                            _blockCreationService.CreateList(sublist, folderStructure, parentDataTypeId);
+                        }
+                    }
+                    var rowProperties = _blockParsingService.GetProperties(row.Html, "row");
+                    row.Properties = rowProperties;
+                }
+                if(!quickBlocksInstruction.ReadOnly)
+                {
+                    _blockCreationService.CreateList(list, folderStructure, parentDataTypeId);
+                }
+            }
+
+            var pageProperties = _blockParsingService.GetProperties(contentType.Html, "page");
+            contentType.Properties = pageProperties;
+
+            contentType.Lists = lists;
+
+            if(quickBlocksInstruction.ReadOnly) return contentType;
+
+            var partialViews = _blockParsingService.GetPartialViews(doc.DocumentNode);
+            _blockCreationService.CreatePartialViews(partialViews);
+
+            if (!lists.Any()) return contentType;
 
             foreach (var list in lists)
             {
                 _blockCreationService.CreateList(list, folderStructure, parentDataTypeId);
             }
 
-
-            var contentType = _blockParsingService.GetContentType(doc.DocumentNode);
-
             if(contentType != null)
             {
                 var newContentType = _blockCreationService.CreateContentType(contentType.Name, contentType.Alias, folderStructure.PagesId, false, false, iconClass: "icon-home", true);
 
-                var properties = _blockParsingService.GetProperties(doc.DocumentNode, "page");
-
-                if(newContentType != null && properties != null && properties.Any()) { 
-                    _blockCreationService.AddPropertiesToContentType(newContentType, properties, "Content");
+                if(newContentType != null && contentType.Properties != null && contentType.Properties.Any()) { 
+                    _blockCreationService.AddPropertiesToContentType(newContentType, contentType.Properties, "Content");
                 }
 
                 var masterTemplate = _fileService.CreateTemplateWithIdentity("Master", "master", doc.Text);
@@ -99,21 +131,23 @@ namespace QuickBlocks.Controllers
 
                 masterDoc.LoadHtml(doc.DocumentNode.OuterHtml);
 
-                var listProperties = masterDoc.DocumentNode.SelectNodes("//*[@data-list-name]");
+                var mainBody = masterDoc.DocumentNode.SelectNodes("//*[@data-content-type-name]").FirstOrDefault();
 
-                foreach(var property in listProperties)
+                if(mainBody != null)
                 {
-                    var itemName = property.Attributes["data-list-name"].Value;
                     var textNode = HtmlTextNode.CreateNode("@RenderBody()");
-                    property.ParentNode.ReplaceChild(textNode, property);
+                    mainBody.ParentNode.ReplaceChild(textNode, mainBody);
                 }
 
+                _blockCreationService.ReplaceAllPartialAttributesWithCalls(masterDoc);
+
                 _blockCreationService.RemoveAllQuickBlocksAttributes(masterDoc);
+
 
                 masterTemplate.Content = masterTemplate.Content + Environment.NewLine + masterDoc.DocumentNode.OuterHtml;
                 _fileService.SaveTemplate((masterTemplate));
                 
-                var tryCreateTemplate = _fileService.CreateTemplateForContentType("homePage", "Home Page");
+                var tryCreateTemplate = _fileService.CreateTemplateForContentType(contentType.Alias, contentType.Name);
                 if(tryCreateTemplate.Success)
                 {
                     var template = tryCreateTemplate.Result.Entity;
@@ -125,7 +159,10 @@ namespace QuickBlocks.Controllers
                     
                     template.SetMasterTemplate(masterTemplate);
                     _fileService.SaveTemplate(template);
-                    
+
+                    var contentTypeDoc = new HtmlDocument();
+                    contentTypeDoc.LoadHtml(contentType.Html);
+
                     var templateContent = new StringBuilder();
                     templateContent.AppendLine("@using Umbraco.Cms.Web.Common.PublishedModels;");
                     templateContent.AppendLine("@using Umbraco.Cms.Web.Common.PublishedModels;");
@@ -135,7 +172,22 @@ namespace QuickBlocks.Controllers
                     templateContent.AppendLine("    Layout = \"master.cshtml\";");
                     templateContent.AppendLine("}");
                     templateContent.AppendLine();
-                    templateContent.AppendLine("@Html.GetBlockListHtml(Model.MainContent)");
+
+                    var listProperties = contentTypeDoc.DocumentNode.SelectNodes("//*[@data-list-name]");
+
+                    _blockCreationService.RenderListPropertyCalls(listProperties, "Model");
+
+                    var subListProperties = contentTypeDoc.DocumentNode.SelectNodes("//*[@data-sub-list-name]");
+
+                    _blockCreationService.RenderListPropertyCalls(subListProperties, "Model");
+
+                    var properties = contentTypeDoc.DocumentNode.SelectNodes("//*[@data-prop-name]");
+
+                    _blockCreationService.RenderProperties(properties, "Model");
+
+                    _blockCreationService.RemoveAllQuickBlocksAttributes(contentTypeDoc);
+
+                    templateContent.AppendLine(contentTypeDoc.DocumentNode.OuterHtml);
 
                     template.Content = templateContent.ToString();
                     _fileService.SaveTemplate(template);
@@ -144,7 +196,7 @@ namespace QuickBlocks.Controllers
                 
             }
 
-            return lists;
+            return contentType;
         }
     }
 }

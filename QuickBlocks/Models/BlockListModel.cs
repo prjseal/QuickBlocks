@@ -12,6 +12,7 @@ namespace QuickBlocks.Models
         public bool UseInlineEditingAsDefault { get; set; }
         public int ValidationLimitMin { get; set; }
         public int ValidationLimitMax { get; set; }
+        public string Html { get; set; }
 
         public BlockListModel(string name)
         {
