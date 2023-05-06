@@ -147,7 +147,7 @@ namespace QuickBlocks.Controllers
                 masterTemplate.Content = masterTemplate.Content + Environment.NewLine + masterDoc.DocumentNode.OuterHtml;
                 _fileService.SaveTemplate((masterTemplate));
                 
-                var tryCreateTemplate = _fileService.CreateTemplateForContentType("homePage", "Home Page");
+                var tryCreateTemplate = _fileService.CreateTemplateForContentType(contentType.Alias, contentType.Name);
                 if(tryCreateTemplate.Success)
                 {
                     var template = tryCreateTemplate.Result.Entity;
@@ -159,7 +159,10 @@ namespace QuickBlocks.Controllers
                     
                     template.SetMasterTemplate(masterTemplate);
                     _fileService.SaveTemplate(template);
-                    
+
+                    var contentTypeDoc = new HtmlDocument();
+                    contentTypeDoc.LoadHtml(contentType.Html);
+
                     var templateContent = new StringBuilder();
                     templateContent.AppendLine("@using Umbraco.Cms.Web.Common.PublishedModels;");
                     templateContent.AppendLine("@using Umbraco.Cms.Web.Common.PublishedModels;");
@@ -169,7 +172,22 @@ namespace QuickBlocks.Controllers
                     templateContent.AppendLine("    Layout = \"master.cshtml\";");
                     templateContent.AppendLine("}");
                     templateContent.AppendLine();
-                    templateContent.AppendLine("@Html.GetBlockListHtml(Model.MainContent)");
+
+                    var listProperties = contentTypeDoc.DocumentNode.SelectNodes("//*[@data-list-name]");
+
+                    _blockCreationService.RenderListPropertyCalls(listProperties, "Model");
+
+                    var subListProperties = contentTypeDoc.DocumentNode.SelectNodes("//*[@data-sub-list-name]");
+
+                    _blockCreationService.RenderListPropertyCalls(subListProperties, "Model");
+
+                    var properties = contentTypeDoc.DocumentNode.SelectNodes("//*[@data-prop-name]");
+
+                    _blockCreationService.RenderProperties(properties, "Model");
+
+                    _blockCreationService.RemoveAllQuickBlocksAttributes(contentTypeDoc);
+
+                    templateContent.AppendLine(contentTypeDoc.DocumentNode.OuterHtml);
 
                     template.Content = templateContent.ToString();
                     _fileService.SaveTemplate(template);

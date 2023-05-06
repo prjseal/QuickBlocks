@@ -85,87 +85,17 @@ namespace QuickBlocks.Services
 
                 doc.LoadHtml(row.Html);
 
+                var listProperties = doc.DocumentNode.SelectNodes("//*[@data-list-name]");
+
+                RenderListPropertyCalls(listProperties, "row");
+
+                var subListProperties = doc.DocumentNode.SelectNodes("//*[@data-sub-list-name]");
+
+                RenderListPropertyCalls(subListProperties, "row");
+
                 var properties = doc.DocumentNode.SelectNodes("//*[@data-prop-name]");
 
-                foreach (var item in properties)
-                {
-                    var name = item.Attributes["data-prop-name"].Value.Replace(" ","");
-                    var propValue = item.Attributes["data-prop-value"]?.Value ?? "";
-                    var listName = item.Attributes["data-list-name"]?.Value ?? "";
-                    var subListName = item.Attributes["data-sub-list-name"]?.Value ?? "";
-                    var replaceMarker = item.Attributes["data-replace-marker"]?.Value ?? "";
-                    var replaceAttribute = item.Attributes["data-replace-attribute"]?.Value ?? "";
-                    var replaceInner = item.Attributes["data-replace-inner"]?.Value ?? "";
-
-                    if (!string.IsNullOrWhiteSpace(replaceMarker))
-                    {
-                        var attributeValue = item.Attributes[replaceAttribute]?.Value ?? "";
-                        if(!string.IsNullOrWhiteSpace(attributeValue))
-                        {
-                            var newAttributeValue = attributeValue.Replace(replaceMarker, "@row." + name + (!string.IsNullOrWhiteSpace(propValue) ? propValue : ""));
-                            item.Attributes[replaceAttribute].Value = newAttributeValue;
-                        }
-                        continue;
-                    }
-
-                    if (!string.IsNullOrWhiteSpace(listName) || !string.IsNullOrWhiteSpace(subListName))
-                    {
-                        item.InnerHtml = "@Html.GetBlockListHtml(row." + name + ")";
-                        RemoveAllQuickBlocksAttributes(doc);
-                        outputFile.WriteLine(spacesToAdd + doc.DocumentNode.OuterHtml);
-                        return true;
-                    }
-
-                    var text = HtmlTextNode.CreateNode("@row." + name);
-                    switch (item.OriginalName)
-                    {
-                        case "h1":
-                        case "h2":
-                        case "h3":
-                        case "h4":
-                        case "h5":
-                        case "h6":
-                            item.InnerHtml = "@row." + name;
-                            break;
-                        case "img":
-                            if (item.Attributes.Contains("src"))
-                            {
-                                item.Attributes["src"].Value = "@row." + name + ".Url()";
-                            }
-                            else
-                            {
-                                item.Attributes.Add("src", "@row." + name + ".Url()");
-                            }
-                            break;
-                        case "p":
-                            item.ParentNode.ReplaceChild(text, item);
-                            break;
-                        case "a":
-                            if (item.Attributes.Contains("href"))
-                            {
-                                item.Attributes["href"].Value = "@row." + name + ".Url";
-                            }
-                            else
-                            {
-                                item.Attributes.Add("href", "@row." + name + ".Url");
-                            }
-
-                            if (item.Attributes.Contains("target"))
-                            {
-                                item.Attributes["target"].Value = "@row." + name + ".Target";
-                            }
-                            else
-                            {
-                                item.Attributes.Add("target", "@row." + name + ".Target");
-                            }
-
-                            if(replaceInner == "true")
-                            {
-                                item.InnerHtml = "@row." + name + ".Name";
-                            }
-                            break;
-                    }
-                }
+                RenderProperties(properties, "row");
 
                 RemoveAllQuickBlocksAttributes(doc);
 
@@ -173,6 +103,103 @@ namespace QuickBlocks.Services
             }
 
             return true;
+        }
+
+        public void RenderProperties(HtmlNodeCollection properties, string context)
+        {
+            foreach (var item in properties)
+            {
+                var name = item.Attributes["data-prop-name"].Value.Replace(" ", "");
+                var propValue = item.Attributes["data-prop-value"]?.Value ?? "";
+                var listName = item.Attributes["data-list-name"]?.Value ?? "";
+                var subListName = item.Attributes["data-sub-list-name"]?.Value ?? "";
+                var replaceMarker = item.Attributes["data-replace-marker"]?.Value ?? "";
+                var replaceAttribute = item.Attributes["data-replace-attribute"]?.Value ?? "";
+                var replaceInner = item.Attributes["data-replace-inner"]?.Value ?? "";
+
+                if (!string.IsNullOrWhiteSpace(replaceMarker))
+                {
+                    var attributeValue = item.Attributes[replaceAttribute]?.Value ?? "";
+                    if (!string.IsNullOrWhiteSpace(attributeValue))
+                    {
+                        var newAttributeValue = attributeValue.Replace(replaceMarker, "@" + context + "." + name + (!string.IsNullOrWhiteSpace(propValue) ? propValue : ""));
+                        item.Attributes[replaceAttribute].Value = newAttributeValue;
+                    }
+                    continue;
+                }
+
+                if (!string.IsNullOrWhiteSpace(listName) || !string.IsNullOrWhiteSpace(subListName))
+                {
+                    continue;
+                }
+
+                var text = HtmlTextNode.CreateNode("@" + context + "." + name);
+                switch (item.OriginalName)
+                {
+                    case "h1":
+                    case "h2":
+                    case "h3":
+                    case "h4":
+                    case "h5":
+                    case "h6":
+                    case "span":
+                        item.InnerHtml = "@" + context + "." + name;
+                        break;
+                    case "img":
+                        if (item.Attributes.Contains("src"))
+                        {
+                            item.Attributes["src"].Value = "@" + context + "." + name + ".Url()";
+                        }
+                        else
+                        {
+                            item.Attributes.Add("src", "@" + context + "." + name + ".Url()");
+                        }
+                        break;
+                    case "p":
+                        item.ParentNode.ReplaceChild(text, item);
+                        break;
+                    case "a":
+                        if (item.Attributes.Contains("href"))
+                        {
+                            item.Attributes["href"].Value = "@" + context + "." + name + ".Url";
+                        }
+                        else
+                        {
+                            item.Attributes.Add("href", "@" + context + "." + name + ".Url");
+                        }
+
+                        if (item.Attributes.Contains("target"))
+                        {
+                            item.Attributes["target"].Value = "@" + context + "." + name + ".Target";
+                        }
+                        else
+                        {
+                            item.Attributes.Add("target", "@" + context + "." + name + ".Target");
+                        }
+
+                        if (replaceInner == "true")
+                        {
+                            item.InnerHtml = "@" + context + "." + name + ".Name";
+                        }
+                        break;
+                }
+            }
+        }
+
+        public void RenderListPropertyCalls(HtmlNodeCollection listProperties, string context)
+        {
+            if (listProperties != null)
+            {
+                foreach (var listProperty in listProperties)
+                {
+                    var name = listProperty.Attributes["data-prop-name"].Value.Replace(" ", "");
+
+                    if (!string.IsNullOrWhiteSpace(name))
+                    {
+                        listProperty.InnerHtml = Environment.NewLine + "@Html.GetBlockListHtml(" + context + "." + name + ")" + Environment.NewLine;
+                    }
+                }
+            }
         }
 
         public void RemoveAllQuickBlocksAttributes(HtmlDocument doc)
@@ -187,7 +214,8 @@ namespace QuickBlocks.Services
                         || x.Name.StartsWith("data-list")
                         || x.Name.StartsWith("data-content-type")
                         || x.Name.StartsWith("data-item")
-                        || x.Name.StartsWith("data-partial"));
+                        || x.Name.StartsWith("data-partial")
+                        || x.Name.StartsWith("data-replace"));
             }
         }
 
