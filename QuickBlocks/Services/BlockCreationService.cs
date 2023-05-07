@@ -15,6 +15,7 @@ using Umbraco.Cms.Core.Services.Implement;
 using Umbraco.Extensions;
 using Microsoft.Extensions.Logging;
 using HtmlAgilityPack;
+using System.Text;
 
 namespace QuickBlocks.Services
 {
@@ -116,24 +117,17 @@ namespace QuickBlocks.Services
                 var replaceMarker = item.Attributes["data-replace-marker"]?.Value ?? "";
                 var replaceAttribute = item.Attributes["data-replace-attribute"]?.Value ?? "";
                 var replaceInner = item.Attributes["data-replace-inner"]?.Value ?? "";
-
-                if (!string.IsNullOrWhiteSpace(replaceMarker))
-                {
-                    var attributeValue = item.Attributes[replaceAttribute]?.Value ?? "";
-                    if (!string.IsNullOrWhiteSpace(attributeValue))
-                    {
-                        var newAttributeValue = attributeValue.Replace(replaceMarker, "@" + context + "." + name + (!string.IsNullOrWhiteSpace(propValue) ? propValue : ""));
-                        item.Attributes[replaceAttribute].Value = newAttributeValue;
-                    }
-                    continue;
-                }
+                var multiple = item.Attributes["data-multiple"]?.Value ?? "false";
+                var isMultiple = multiple == "true";
+                var objectReference = context + "." + name;
+                var originalObjectReference = objectReference;
 
                 if (!string.IsNullOrWhiteSpace(listName) || !string.IsNullOrWhiteSpace(subListName))
                 {
                     continue;
                 }
 
-                var text = HtmlTextNode.CreateNode("@" + context + "." + name);
+                var text = HtmlTextNode.CreateNode("@" + objectReference);
                 switch (item.OriginalName)
                 {
                     case "h1":
@@ -143,45 +137,90 @@ namespace QuickBlocks.Services
                     case "h5":
                     case "h6":
                     case "span":
-                        item.InnerHtml = "@" + context + "." + name;
+                        item.InnerHtml = "@" + objectReference;
                         break;
                     case "img":
                         if (item.Attributes.Contains("src"))
                         {
-                            item.Attributes["src"].Value = "@" + context + "." + name + ".Url()";
+                            item.Attributes["src"].Value = "@" + objectReference + ".Url()";
                         }
                         else
                         {
-                            item.Attributes.Add("src", "@" + context + "." + name + ".Url()");
+                            item.Attributes.Add("src", "@" + objectReference + ".Url()");
                         }
                         break;
                     case "p":
                         item.ParentNode.ReplaceChild(text, item);
                         break;
                     case "a":
+                        if (isMultiple)
+                        {
+                            objectReference = "item";
+                        }
+
                         if (item.Attributes.Contains("href"))
                         {
-                            item.Attributes["href"].Value = "@" + context + "." + name + ".Url";
+                            item.Attributes["href"].Value = "@" + objectReference + ".Url";
                         }
                         else
                         {
-                            item.Attributes.Add("href", "@" + context + "." + name + ".Url");
+                            item.Attributes.Add("href", "@" + objectReference + ".Url");
                         }
 
                         if (item.Attributes.Contains("target"))
                         {
-                            item.Attributes["target"].Value = "@" + context + "." + name + ".Target";
+                            item.Attributes["target"].Value = "@" + objectReference + ".Target";
                         }
                         else
                         {
-                            item.Attributes.Add("target", "@" + context + "." + name + ".Target");
+                            item.Attributes.Add("target", "@" + objectReference + ".Target");
+                        }
+
+                        if (multiple == "true")
+                        {
+                            var openingHtmlString = new StringBuilder();
+                            openingHtmlString.AppendLine("@if(" + originalObjectReference + " != null && " + originalObjectReference + ".Any())");
+                            openingHtmlString.AppendLine("{");
+                            openingHtmlString.AppendLine("    foreach(var item in " + originalObjectReference + ")");
+                            openingHtmlString.AppendLine("    {");
+                            var openingHtmlNode = HtmlTextNode.CreateNode(openingHtmlString.ToString());
+                            item.ParentNode.InsertBefore(openingHtmlNode, item);
+
+                            var closingHtmlString = new StringBuilder();
+                            closingHtmlString.AppendLine("    }");
+                            closingHtmlString.AppendLine("}");
+                            var closingHtmlNode = HtmlTextNode.CreateNode(closingHtmlString.ToString());
+                            item.ParentNode.InsertAfter(closingHtmlNode, item);
                         }
 
                         if (replaceInner == "true")
                         {
-                            item.InnerHtml = "@" + context + "." + name + ".Name";
+                            if (!string.IsNullOrWhiteSpace(replaceMarker) && !string.IsNullOrWhiteSpace(propValue))
+                            {
+                                var existingInnerHtml = item.InnerHtml;
+                                existingInnerHtml = existingInnerHtml.Replace(replaceMarker, "@" + objectReference + (!string.IsNullOrWhiteSpace(propValue) ? propValue : ""));
+                                item.InnerHtml = existingInnerHtml;
+                            }
+                        }
+                        else
+                        {
+                            item.InnerHtml = "@" + objectReference + ".Name";
                         }
                         break;
+                }
+
+                if (!string.IsNullOrWhiteSpace(replaceMarker))
+                {
+                    var attributeValue = item.Attributes[replaceAttribute]?.Value ?? "";
+                    if (!string.IsNullOrWhiteSpace(attributeValue))
+                    {
+                        var newAttributeValue = attributeValue.Replace(replaceMarker, "@" + objectReference + (!string.IsNullOrWhiteSpace(propValue) ? propValue : ""));
+                        item.Attributes[replaceAttribute].Value = newAttributeValue;
+                    }
+                    if (replaceInner == "false")
+                    {
+                        continue;
+                    }
                 }
             }
         }
@@ -223,12 +262,12 @@ namespace QuickBlocks.Services
         {
             var partials = doc.DocumentNode.SelectNodes("//*[@data-partial-name]");
 
-            if(partials != null && partials.Any())
+            if (partials != null && partials.Any())
             {
-                foreach(var partial in partials)
+                foreach (var partial in partials)
                 {
                     var itemName = partial.GetAttributeValue("data-partial-name", "");
-                    if(!string.IsNullOrWhiteSpace("itemName"))
+                    if (!string.IsNullOrWhiteSpace("itemName"))
                     {
                         var text = HtmlTextNode.CreateNode("@await Html.PartialAsync(\"~/Views/Partials/" + itemName + ".cshtml\")");
                         partial.ParentNode.ReplaceChild(text, partial);
@@ -319,7 +358,7 @@ namespace QuickBlocks.Services
             if (matchingFolder == null)
             {
                 var tryCreateContainer = _contentTypeService.CreateContainer(parentId, Guid.NewGuid(), folderName);
-                if(tryCreateContainer.Success)
+                if (tryCreateContainer.Success)
                 {
                     return tryCreateContainer.Result!.Entity!.Id;
                 }
@@ -345,7 +384,7 @@ namespace QuickBlocks.Services
             if (settingsDocType == null && row.HasSettings)
             {
                 settingsDocType = CreateContentType(row.SettingsName, row.SettingsAlias, folderStructure.ElementsSettingsModelsId, true, false, "icon-settings color-indigo");
-                if(settingsDocType != null)
+                if (settingsDocType != null)
                 {
                     AddCompositionsToContentType(settingsDocType, new List<string>() { "blockVisibilitySettings" });
                 }
@@ -416,7 +455,7 @@ namespace QuickBlocks.Services
                 Configuration = new MultiUrlPickerConfiguration
                 {
                     MinNumber = minNumber,
-                    MaxNumber= maxNumber,
+                    MaxNumber = maxNumber,
                 },
                 ParentId = parentId
             };
@@ -437,7 +476,7 @@ namespace QuickBlocks.Services
                 UseInlineEditingAsDefault = list.UseInlineEditingAsDefault,
             };
 
-            if(list.ValidationLimitMin != 0 && list.ValidationLimitMax != 0)
+            if (list.ValidationLimitMin != 0 && list.ValidationLimitMax != 0)
             {
                 blockConfiguration.ValidationLimit = new BlockListConfiguration.NumberRange()
                 {
@@ -452,7 +491,7 @@ namespace QuickBlocks.Services
                 Configuration = blockConfiguration,
                 ParentId = parentDataTypeId
             };
-           
+
             _dataTypeService.Save(newDataType);
         }
 
@@ -467,7 +506,7 @@ namespace QuickBlocks.Services
                 new PropertyModel("Hide", "True/false", null)
             };
 
-            if(contentType != null)
+            if (contentType != null)
             {
                 AddPropertiesToContentType(contentType, properties, "Settings");
             }
@@ -476,7 +515,7 @@ namespace QuickBlocks.Services
         }
 
         public IContentType CreateContentType(string name, string alias, int parentId = -1,
-            bool isElement = true, bool isContainer = false, string iconClass = "icon-science", 
+            bool isElement = true, bool isContainer = false, string iconClass = "icon-science",
             bool allowedAsRoot = false, bool updateDoctype = false)
         {
             var existingDocType = _contentTypeService.Get(alias);
@@ -511,13 +550,13 @@ namespace QuickBlocks.Services
         public void AddCompositionsToContentType(IContentType contentType, List<string> compositionAliases)
         {
             List<IContentTypeComposition> compositions = contentType.ContentTypeComposition.ToList();
-            
-            foreach(var compositionAlias in compositionAliases)
+
+            foreach (var compositionAlias in compositionAliases)
             {
                 IContentType? composition = _contentTypeService.Get(compositionAlias);
-                
 
-                if(composition == null)
+
+                if (composition == null)
                 {
                     _logger.LogError("Composition is null");
                     continue;
@@ -534,40 +573,40 @@ namespace QuickBlocks.Services
         public void AddPropertiesToContentType(IContentType contentType, IEnumerable<PropertyModel> properties, string groupName)
         {
             if (contentType == null || properties == null) return;
-            
-                var success = contentType.AddPropertyGroup(groupName.ToSafeAlias(_shortStringHelper, true), groupName);
-                if(success)
+
+            var success = contentType.AddPropertyGroup(groupName.ToSafeAlias(_shortStringHelper, true), groupName);
+            if (success)
+            {
+                var contentGroup = contentType.PropertyGroups.FirstOrDefault(x => x.Name == groupName);
+                foreach (var propertyModel in properties)
                 {
-                    var contentGroup = contentType.PropertyGroups.FirstOrDefault(x => x.Name == groupName);
-                    foreach (var propertyModel in properties)
+                    var dataType = _dataTypeService.GetDataType(propertyModel.PropertyType);
+
+                    var alias = propertyModel.Name.ToSafeAlias(_shortStringHelper, true);
+
+                    var propertyType = new PropertyType(_shortStringHelper, dataType, alias)
                     {
-                        var dataType = _dataTypeService.GetDataType(propertyModel.PropertyType);
-
-                        var alias = propertyModel.Name.ToSafeAlias(_shortStringHelper, true);
-
-                        var propertyType = new PropertyType(_shortStringHelper, dataType, alias)
-                        {
-                            Name = propertyModel.Name,
-                            Alias = alias
-                        };
-                        contentGroup.PropertyTypes!.Add(propertyType);
-                    }
-                    _contentTypeService.Save(contentType);
+                        Name = propertyModel.Name,
+                        Alias = alias
+                    };
+                    contentGroup.PropertyTypes!.Add(propertyType);
                 }
+                _contentTypeService.Save(contentType);
+            }
         }
 
         public void CreatePartialViews(List<PartialViewModel> partialViews)
         {
-            if(partialViews == null) return;
+            if (partialViews == null) return;
 
             foreach (var partialView in partialViews)
             {
                 var fileName = $"{partialView.Name}.cshtml";
                 var tryCreatePartialView = _fileService.CreatePartialView(new PartialView(PartialViewType.PartialView, "/Views/Partials/" + fileName));
-                if(tryCreatePartialView.Success)
+                if (tryCreatePartialView.Success)
                 {
                     var file = tryCreatePartialView.Result;
-                    if(file != null)
+                    if (file != null)
                     {
                         var partialDoc = new HtmlDocument();
 
@@ -579,7 +618,7 @@ namespace QuickBlocks.Services
                         content += partialDoc.DocumentNode.OuterHtml;
 
 
-                        content = 
+                        content =
                         file.Content = content;
                     }
                     _fileService.SavePartialView(file);
