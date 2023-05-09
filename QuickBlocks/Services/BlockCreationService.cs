@@ -69,8 +69,8 @@ namespace QuickBlocks.Services
                     "@inherits Umbraco.Cms.Web.Common.Views.UmbracoViewPage<Umbraco.Cms.Core.Models.Blocks.BlockListItem>");
                 outputFile.WriteLine("");
                 outputFile.WriteLine("@{");
-                outputFile.WriteLine($"    var row = ({row.Name.Replace(" ", "")})Model.Content;");
-                outputFile.WriteLine($"    var settings = ({row.SettingsName.Replace(" ", "")})Model.Settings;");
+                outputFile.WriteLine($"    var row = ({row.Name.ToCleanString(_shortStringHelper, CleanStringType.ConvertCase | CleanStringType.PascalCase)})Model.Content;");
+                outputFile.WriteLine($"    var settings = ({row.SettingsName.ToCleanString(_shortStringHelper, CleanStringType.ConvertCase | CleanStringType.PascalCase)})Model.Settings;");
                 outputFile.WriteLine("");
                 outputFile.WriteLine("    if (settings.Hide) { return; }");
                 outputFile.WriteLine("}");
@@ -110,16 +110,16 @@ namespace QuickBlocks.Services
         {
             foreach (var item in properties)
             {
-                var name = item.Attributes["data-prop-name"].Value.Replace(" ", "");
+                var name = item.Attributes["data-prop-name"].Value;
                 var propValue = item.Attributes["data-prop-value"]?.Value ?? "";
+                var propType = item.Attributes["data-prop-type"]?.Value ?? "";
                 var listName = item.Attributes["data-list-name"]?.Value ?? "";
                 var subListName = item.Attributes["data-sub-list-name"]?.Value ?? "";
                 var replaceMarker = item.Attributes["data-replace-marker"]?.Value ?? "";
-                var replaceAttribute = item.Attributes["data-replace-attribute"]?.Value ?? "";
                 var replaceInner = item.Attributes["data-replace-inner"]?.Value ?? "";
                 var multiple = item.Attributes["data-multiple"]?.Value ?? "false";
                 var isMultiple = multiple == "true";
-                var objectReference = context + "." + name;
+                var objectReference = context + "." + name.ToCleanString(_shortStringHelper, CleanStringType.ConvertCase | CleanStringType.PascalCase);
                 var originalObjectReference = objectReference;
 
                 if (!string.IsNullOrWhiteSpace(listName) || !string.IsNullOrWhiteSpace(subListName))
@@ -137,7 +137,14 @@ namespace QuickBlocks.Services
                     case "h5":
                     case "h6":
                     case "span":
-                        item.InnerHtml = "@" + objectReference;
+                        if (!string.IsNullOrWhiteSpace(replaceMarker))
+                        {
+                            ReplaceAttributesAndInnerHtmlWithValue(item, propValue, replaceMarker, objectReference, replaceInner);
+                        }
+                        else
+                        {
+                            item.InnerHtml = "@" + objectReference;
+                        }
                         break;
                     case "img":
                         if (item.Attributes.Contains("src"))
@@ -147,6 +154,11 @@ namespace QuickBlocks.Services
                         else
                         {
                             item.Attributes.Add("src", "@" + objectReference + ".Url()");
+                        }
+
+                        if (!string.IsNullOrWhiteSpace(replaceMarker))
+                        {
+                            ReplaceAttributesAndInnerHtmlWithValue(item, string.IsNullOrWhiteSpace(propValue) ? ".Url()" : propValue, replaceMarker, objectReference, replaceInner);
                         }
                         break;
                     case "p":
@@ -193,35 +205,74 @@ namespace QuickBlocks.Services
                             item.ParentNode.InsertAfter(closingHtmlNode, item);
                         }
 
-                        if (replaceInner == "true")
+                        if (!string.IsNullOrWhiteSpace(replaceMarker))
                         {
-                            if (!string.IsNullOrWhiteSpace(replaceMarker) && !string.IsNullOrWhiteSpace(propValue))
-                            {
-                                var existingInnerHtml = item.InnerHtml;
-                                existingInnerHtml = existingInnerHtml.Replace(replaceMarker, "@" + objectReference + (!string.IsNullOrWhiteSpace(propValue) ? propValue : ""));
-                                item.InnerHtml = existingInnerHtml;
-                            }
+                            ReplaceAttributesAndInnerHtmlWithValue(item, string.IsNullOrWhiteSpace(propValue) ? ".Url()" : propValue, replaceMarker, objectReference, replaceInner);
                         }
-                        else
+                        else if(replaceInner.ToLower() != "false")
                         {
                             item.InnerHtml = "@" + objectReference + ".Name";
                         }
                         break;
+                    default:
+                        var newPropValue = propValue;
+                        if (!string.IsNullOrWhiteSpace(replaceMarker))
+                        {
+                            if(string.IsNullOrWhiteSpace(propValue))
+                            {
+                                if (propType.Equals("Image Media Picker", StringComparison.CurrentCultureIgnoreCase))
+                                {
+                                    newPropValue = ".Url()";
+                                }
+                                else if (propType.Equals("Single Url Picker", StringComparison.CurrentCultureIgnoreCase))
+                                {
+                                    newPropValue = ".Name";
+                                }
+                            }
+                        }
+                        ReplaceAttributesAndInnerHtmlWithValue(item, newPropValue, replaceMarker, objectReference, replaceInner);
+                        break;
                 }
 
-                if (!string.IsNullOrWhiteSpace(replaceMarker))
+                //if (!string.IsNullOrWhiteSpace(replaceMarker))
+                //{
+                //    var attributeValue = item.Attributes[replaceAttribute]?.Value ?? "";
+                //    if (!string.IsNullOrWhiteSpace(attributeValue))
+                //    {
+                //        var newAttributeValue = attributeValue.Replace(replaceMarker, "@" + objectReference + (!string.IsNullOrWhiteSpace(propValue) ? propValue : ""));
+                //        item.Attributes[replaceAttribute].Value = newAttributeValue;
+                //    }
+                //    if (replaceInner == "false")
+                //    {
+                //        continue;
+                //    }
+                //}
+            }
+        }
+
+        public void ReplaceAttributesAndInnerHtmlWithValue(HtmlNode item, string propValue, string replaceMarker, string objectReference, string replaceInner)
+        {
+            var replaceInnerVal = replaceInner.Equals("true", StringComparison.CurrentCultureIgnoreCase);
+            if (!string.IsNullOrWhiteSpace(replaceMarker))
+            {
+                var attributes = item.Attributes.Where(x => !x.OriginalName.StartsWith("data-"));
+                foreach (var attr in attributes)
                 {
-                    var attributeValue = item.Attributes[replaceAttribute]?.Value ?? "";
-                    if (!string.IsNullOrWhiteSpace(attributeValue))
-                    {
-                        var newAttributeValue = attributeValue.Replace(replaceMarker, "@" + objectReference + (!string.IsNullOrWhiteSpace(propValue) ? propValue : ""));
-                        item.Attributes[replaceAttribute].Value = newAttributeValue;
-                    }
-                    if (replaceInner == "false")
-                    {
-                        continue;
-                    }
+                    var currentValue = attr.Value;
+                    var newValue = currentValue.Replace(replaceMarker, "@" + objectReference + (!string.IsNullOrWhiteSpace(propValue) ? propValue : ""));
+                    attr.Value = newValue;
                 }
+
+                if(replaceInnerVal)
+                {
+                    var existingInnerHtml = item.InnerHtml;
+                    existingInnerHtml = existingInnerHtml.Replace(replaceMarker, "@" + objectReference + (!string.IsNullOrWhiteSpace(propValue) ? propValue : ""));
+                    item.InnerHtml = existingInnerHtml;
+                }
+            }
+            else if(replaceInnerVal)
+            {
+                item.InnerHtml = "@" + objectReference + (!string.IsNullOrWhiteSpace(propValue) ? propValue : "");
             }
         }
 
@@ -231,7 +282,7 @@ namespace QuickBlocks.Services
             {
                 foreach (var listProperty in listProperties)
                 {
-                    var name = listProperty.Attributes["data-prop-name"].Value.Replace(" ", "");
+                    var name = listProperty.Attributes["data-prop-name"].Value.ToCleanString(_shortStringHelper, CleanStringType.ConvertCase | CleanStringType.PascalCase);
 
                     if (!string.IsNullOrWhiteSpace(name))
                     {

@@ -170,14 +170,16 @@ namespace QuickBlocks.Services
 
             var properties = new List<PropertyModel>();
 
+            var propertyNodes = doc.DocumentNode.SelectNodes("//*[@data-prop-name]");
+
             var descendants = doc.DocumentNode.Descendants();
             if (descendants == null || !descendants.Any()) return properties;
 
-            foreach (var descendant in descendants)
+            foreach (var propertyNode in propertyNodes)
             {
-                var itemLocation = descendant.GetAttributeValue("data-prop-location", "");
-                var itemName = descendant.GetAttributeValue("data-prop-name", "");
-                var itemType = descendant.GetAttributeValue("data-prop-type", "");
+                var itemLocation = propertyNode.GetAttributeValue("data-prop-location", "");
+                var itemName = propertyNode.GetAttributeValue("data-prop-name", "");
+                var itemType = propertyNode.GetAttributeValue("data-prop-type", "");
 
                 if (context == "page" && itemLocation != "page") continue;
 
@@ -185,7 +187,7 @@ namespace QuickBlocks.Services
 
                 if (!string.IsNullOrWhiteSpace(itemName) && string.IsNullOrWhiteSpace(itemType))
                 {
-                    switch (descendant.OriginalName.ToLower())
+                    switch (propertyNode.OriginalName.ToLower())
                     {
                         case "img":
                             itemType = "Image Media Picker";
@@ -212,7 +214,7 @@ namespace QuickBlocks.Services
 
                 if (!string.IsNullOrWhiteSpace(itemName))
                 {
-                    var item = new PropertyModel(itemName, itemType, descendant);
+                    var item = new PropertyModel(itemName, itemType, propertyNode);
                     properties.Add(item);
                 }
             }
