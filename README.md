@@ -62,3 +62,24 @@ Here are some examples
 </a>
 ```
 
+## Create a list property inside a row
+In the sub list items, we don't need to specify the property location, we only do that for row or page properties.
+
+```html
+<div data-row-name="Services">
+     <h2 class="title" data-prop-name="Title" data-prop-location="row">We build awesome products</h2>
+     <h5 class="description" data-prop-name="Description" data-prop-location="row">This is the paragraph where you can write more details </h5>
+     <div data-sub-list-name="Service List" 
+          data-prop-name="Services" 
+          data-prop-type="[BlockList] Service List" 
+          data-prop-location="row" 
+          data-list-inline="false">
+          
+          <div data-item-name="Service Item">
+               <h4 class="info-title" data-prop-name="Title">1. Design</h4>
+               <p data-prop-name="Description">blah blah blah</p>
+               <a data-prop-name="Link" href="#pablo">Find more...</a>
+          </div>
+     </div>
+</div>
+```
