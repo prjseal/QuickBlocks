@@ -83,3 +83,11 @@ In the sub list items, we don't need to specify the property location, we only d
      </div>
 </div>
 ```
+
+## Move some HTML to a partial view
+
+```html
+<footer data-partial-name="Footer">
+     ...
+</footer>
+```
