@@ -91,3 +91,59 @@ In the sub list items, we don't need to specify the property location, we only d
      ...
 </footer>
 ```
+
+## Extra block list options
+
+### Max Width
+
+```html
+data-list-maxwidth="100%"
+```
+
+### Single block mode
+
+```html
+data-list-single="true"
+```
+### Live editing mode
+
+```html
+data-list-live="true"
+```
+### Inline Editing
+
+```html
+data-list-inline="true"
+```
+
+### List Min Items
+
+```html
+data-list-min="0"
+```
+
+### List Max Items
+
+```html
+data-list-max="3"
+```
+
+## Extra row options
+
+### Block Row Icon
+
+```html
+data-icon-class="icon-science"
+```
+
+### Block Row Icon Colour
+
+```html
+data-icon-colour="color-indigo"
+```
+
+### Block Row Label Property
+
+```html
+data-label-property="title"
+```
