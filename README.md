@@ -5,7 +5,7 @@ Here are some examples
 
 Add a block list property
 
-'''html
+```html
 <div data-content-type-name="Home Page" 
      data-prop-name="Main Content" 
      data-prop-type="[BlockList] Main Content" 
@@ -13,3 +13,4 @@ Add a block list property
      data-list-name="Main Content">
   ...
 </div>
+```
