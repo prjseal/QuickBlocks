@@ -38,11 +38,11 @@ namespace QuickBlocks.Models
                 SettingsName = hasSettings ? Name + " " + settingsSuffix : "";
             }
 
-            Alias = Name.Replace(" ", "").ToSafeAlias(shortStringHelper, true);
-            SettingsAlias = hasSettings ? SettingsName.Replace(" ", "").ToSafeAlias(shortStringHelper, true) : "";
+            Alias = Name.ToSafeAlias(shortStringHelper, true);
+            SettingsAlias = hasSettings ? SettingsName.ToSafeAlias(shortStringHelper, true) : "";
             Html = node.OuterHtml;
             IconClass = iconClass;
-            LabelProperty = labelProperty.Replace(" ", "").ToSafeAlias(shortStringHelper, true);
+            LabelProperty = labelProperty.ToSafeAlias(shortStringHelper, true);
         }
     }
 }

@@ -16,7 +16,7 @@ public class ContentTypeModel
     public ContentTypeModel(IShortStringHelper shortStringHelper, string name, string html)
     {
         Name = name;
-        Alias = Name.Replace(" ", "").ToSafeAlias(shortStringHelper, true);
+        Alias = Name.ToSafeAlias(shortStringHelper, true);
         Html = html;
     }
 }
