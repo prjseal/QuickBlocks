@@ -7,16 +7,16 @@
     <Product>Umbraco.Community.QuickBlocks</Product>
     <PackageId>Umbraco.Community.QuickBlocks</PackageId>
     <Title>QuickBlocks</Title>
-    <Description>...</Description>
+    <Description>A package for quickly building block list based Umbraco websites all from data attributes in your HTMl</Description>
     <PackageTags>umbraco;umbraco-marketplace;quickblocks;fast;builder</PackageTags>
     <RootNamespace>Umbraco.Community.QuickBlocks</RootNamespace>
     <GeneratePackageOnBuild>True</GeneratePackageOnBuild>
-    <Version>1.0.0</Version>
-    <VersionSuffix>alpah-001</VersionSuffix>
+    <Version>1.0.0-alpah-01</Version>
     <Authors>Paul Seal</Authors>
     <Copyright>2023 © Paul Seal</Copyright>
     <PackageProjectUrl>https://github.com/prjseal/QuickBlocks</PackageProjectUrl>
     <RepositoryUrl>https://github.com/prjseal/QuickBlocks</RepositoryUrl>
+    <PackageIconUrl>https://github.com/prjseal/QuickBlocks/blob/master/images/logo.png?raw=true</PackageIconUrl>
     <PackageReadmeFile>README_nuget.md</PackageReadmeFile>
     <RepositoryType>git</RepositoryType>
     <PackageLicenseExpression>MIT</PackageLicenseExpression>
@@ -33,6 +33,7 @@
   </ItemGroup>
 
   <ItemGroup>
+    <None Include="..\..\images\logo.png" Pack="true" PackPath="\" />
     <None Include="..\..\docs\README_nuget.md">
       <Pack>True</Pack>
       <PackagePath>\</PackagePath>
