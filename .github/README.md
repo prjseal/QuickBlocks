@@ -6,6 +6,8 @@
 
 A package for quickly building block list based Umbraco websites all from data attributes in your HTMl
 
+***** Please don't judge my code yet. I've not cleaned it up yet *****
+
 ## Installation
 
 Add the package to an existing Umbraco website (v10.4+) from nuget:
