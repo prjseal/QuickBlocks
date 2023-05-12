@@ -355,3 +355,4 @@ MigrationBackup/
 # Rider
 src/.idea
 /src/QuickBlocks.TestSite/umbraco/Data
+/src/QuickBlocks.TestSite/Views/Partials/blocklist/Components
