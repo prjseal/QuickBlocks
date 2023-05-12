@@ -1,0 +1,20 @@
+@inherits Umbraco.Cms.Web.Common.Views.UmbracoViewPage<Umbraco.Cms.Core.Models.Blocks.BlockListItem>
+
+@{
+    var row = (TeamRow)Model.Content;
+    var settings = (TeamRowSettings)Model.Settings;
+
+    if (settings.Hide) { return; }
+}
+
+              <div class="about-team team-1">
+                  <div class="row">
+                      <div class="col-md-8 ml-auto mr-auto text-center">
+                          <h2 class="title">@row.Title</h2>
+                          <h5 class="description">@row.Description</h5>
+                      </div>
+                  </div>
+                  <div class="row">
+@Html.GetBlockListHtml(row.TeamMembers)
+</div>
+              </div>

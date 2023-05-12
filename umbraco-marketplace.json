@@ -1,0 +1,27 @@
+{
+  "$schema": "https://marketplace.umbraco.com/umbraco-marketplace-schema.json",
+  "AuthorDetails": {
+    "Name": "Paul Seal",
+    "ImageUrl": "https://github.com/prjseal.png",
+    "Url": "https://github.com/prjseal",
+    "Description": "Paul is an Umbraco Master and 5 x Umbraco MVP who loves making tutorials and small Umbraco packages. He works for the Umbraco Gold Partner ClerksWell"
+  },
+  "Contributors": [
+    {
+      "Name": "Paul Seal",
+      "Url": "https://codeshare.co.uk"
+    },
+    {
+      "Name": "ClerksWell",
+      "Url": "https://www.clerkswell.com"
+    }
+  ],
+  "Category": "Developer Tools",
+  "Description": "A package for quickly building block list based Umbraco websites all from data attributes in your HTMl",
+  "LicenseTypes": [ "Free" ],
+  "IssueTrackerUrl": "https://github.com/prjseal/QuickBlocks/issues",
+  "PackageType": "Package",
+  "Tags": [ "HTML", "Fast", "Quick", "Blocks" ],
+  "Title": "QuickBlocks",
+  "VideoUrl": "https://www.youtube.com/watch?v=Ja7ynDvCGQY"
+}

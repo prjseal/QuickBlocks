@@ -1,0 +1,34 @@
+@inherits Umbraco.Cms.Web.Common.Views.UmbracoViewPage<Umbraco.Cms.Core.Models.Blocks.BlockListItem>
+
+@{
+    var row = (TeamItemRow)Model.Content;
+    var settings = (TeamItemRowSettings)Model.Settings;
+
+    if (settings.Hide) { return; }
+}
+
+                      <div class="col-md-3" data-label-property="Person Name">
+                          <div class="card card-profile card-plain">
+                              <div class="card-avatar">
+                                  <a href="#pablo">
+                                      <img class="img" src="@row.Image.Url()">
+                                  </a>
+                              </div>
+                              <div class="card-body">
+                                  <h4 class="card-title">@row.PersonName</h4>
+                                  <h6 class="category text-muted">@row.JobTitle</h6>
+                                  @row.Description
+                              </div>
+                              <div class="card-footer justify-content-center">
+                                  @if(row.SocialLinks != null && row.SocialLinks.Any())
+{
+    foreach(var item in row.SocialLinks)
+    {
+<a href="@item.Url" class="btn btn-just-icon btn-link btn-@item.Name" data-multiple="true" target="@item.Target">
+                                      <i class="fa fa-@item.Name"></i>
+                                  </a>    }
+}
+
+                              </div>
+                          </div>
+                      </div>
