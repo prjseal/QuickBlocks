@@ -8,10 +8,25 @@ A package for quickly building block list based Umbraco websites all from data a
 
 ## Installation
 
-Add the package to an existing Umbraco website (v10.4+) from nuget:
+At the moment, it is best to use this on a brand new empty umbraco site.
+You can create your empty site and install QuickBlocks using these commands.
+You should be able to paste it all into the command line.
 
-`dotnet add package Umbraco.Community.QuickBlocks --version 1.0.0-alpha-02`
+```ps1
+# Ensure we have the latest Umbraco templates
+dotnet new -i Umbraco.Templates
 
+# Create solution/project
+dotnet new sln --name "MySolution"
+dotnet new umbraco --force -n "MyProject" --friendly-name "Administrator" --email "admin@example.com" --password "1234567890" --development-database-type SQLite
+dotnet sln add "MyProject"
+
+#Add QuickBlocks
+dotnet add "MyProject" package Umbraco.Community.QuickBlocks --prerelease 
+
+dotnet run --project "MyProject"
+#Running
+```
 
 ## Data Attributes
 
