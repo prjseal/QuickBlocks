@@ -75,7 +75,7 @@ public class QuickBlocksApiController : UmbracoAuthorizedApiController
                     sublist.Rows = subRows;
                     foreach (var subRow in sublist.Rows)
                     {
-                        var subRowProperties = _blockParsingService.GetProperties(subRow.Html, "");
+                        var subRowProperties = _blockParsingService.GetProperties(subRow.Html);
                         subRow.Properties = subRowProperties;
                     }
 
@@ -84,7 +84,7 @@ public class QuickBlocksApiController : UmbracoAuthorizedApiController
                         _blockCreationService.CreateList(sublist, folderStructure, parentDataTypeId);
                     }
                 }
-                var rowProperties = _blockParsingService.GetProperties(row.Html, "row");
+                var rowProperties = _blockParsingService.GetProperties(row.Html);
                 row.Properties = rowProperties;
             }
             if (!quickBlocksInstruction.ReadOnly)
@@ -93,7 +93,7 @@ public class QuickBlocksApiController : UmbracoAuthorizedApiController
             }
         }
 
-        var pageProperties = _blockParsingService.GetProperties(contentType.Html, "page");
+        var pageProperties = _blockParsingService.GetProperties(contentType.Html);
         contentType.Properties = pageProperties;
 
         contentType.Lists = lists;

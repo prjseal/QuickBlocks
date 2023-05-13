@@ -124,7 +124,7 @@ public class BlockParsingService : IBlockParsingService
                 iconClass: string.Join(" ", (new List<string>() { iconClass, iconColour }).Where(x => !string.IsNullOrWhiteSpace(x))),
                 labelProperty: labelProperty);
 
-            var properties = GetProperties(rowNode.OuterHtml, isNestedList ? "item" : "row");
+            var properties = GetProperties(rowNode.OuterHtml);
             row.Properties = properties;
 
             rows.Add(row);
@@ -151,7 +151,7 @@ public class BlockParsingService : IBlockParsingService
             {
                 var item = new BlockItemModel(_shortStringHelper, itemName, descendant);
 
-                var properties = GetProperties(descendant.OuterHtml, "item");
+                var properties = GetProperties(descendant.OuterHtml);
                 item.Properties = properties;
 
                 blocks.Add(item);
@@ -161,7 +161,7 @@ public class BlockParsingService : IBlockParsingService
         return blocks;
     }
 
-    public List<PropertyModel> GetProperties(string html, string context)
+    public List<PropertyModel> GetProperties(string html)
     {
         var doc = new HtmlDocument();
 
@@ -175,14 +175,10 @@ public class BlockParsingService : IBlockParsingService
         if (descendants == null || !descendants.Any()) return properties;
 
         foreach (var propertyNode in propertyNodes)
-        {
-            var itemLocation = propertyNode.GetAttributeValue("data-prop-location", "");
+        {            
             var itemName = propertyNode.GetAttributeValue("data-prop-name", "");
             var itemType = propertyNode.GetAttributeValue("data-prop-type", "");
 
-            if (context == "page" && itemLocation != "page") continue;
-
-            if (context == "row" && itemLocation != "row") continue;
 
             if (!string.IsNullOrWhiteSpace(itemName) && string.IsNullOrWhiteSpace(itemType))
             {
