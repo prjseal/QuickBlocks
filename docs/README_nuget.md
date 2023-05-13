@@ -28,6 +28,14 @@ dotnet run --project "MyProject"
 #Running
 ```
 
+## 
+
+Watch this video to see how I use it.
+
+<a href="https://www.youtube.com/watch?v=Ja7ynDvCGQY&" target="blank">
+<img src="https://i.ytimg.com/vi/Ja7ynDvCGQY/hqdefault.jpg" alt="QuickBlocks Introduction Video" />
+</a>
+
 ## Data Attributes
 
 Here are some examples
