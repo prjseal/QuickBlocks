@@ -10,7 +10,7 @@ A package for quickly building block list based Umbraco websites all from data a
 
 Add the package to an existing Umbraco website (v10.4+) from nuget:
 
-`dotnet add package Umbraco.Community.QuickBlocks`
+`dotnet add package Umbraco.Community.QuickBlocks --version 1.0.0-alpha-02`
 
 
 ## Data Attributes

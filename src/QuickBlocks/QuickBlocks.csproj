@@ -11,12 +11,12 @@
     <PackageTags>umbraco;umbraco-marketplace;quickblocks;fast;builder</PackageTags>
     <RootNamespace>Umbraco.Community.QuickBlocks</RootNamespace>
     <GeneratePackageOnBuild>True</GeneratePackageOnBuild>
-    <Version>1.0.0-alpah-01</Version>
+    <Version>1.0.0-alpha-02</Version>
     <Authors>Paul Seal</Authors>
     <Copyright>2023 © Paul Seal</Copyright>
     <PackageProjectUrl>https://github.com/prjseal/QuickBlocks</PackageProjectUrl>
     <RepositoryUrl>https://github.com/prjseal/QuickBlocks</RepositoryUrl>
-    <PackageIconUrl>https://github.com/prjseal/QuickBlocks/blob/master/images/logo.png?raw=true</PackageIconUrl>
+    <PackageIconUrl>https://github.com/prjseal/QuickBlocks/blob/main/images/logo.png?raw=true</PackageIconUrl>
     <PackageReadmeFile>README_nuget.md</PackageReadmeFile>
     <RepositoryType>git</RepositoryType>
     <PackageLicenseExpression>MIT</PackageLicenseExpression>
