@@ -1,49 +1,13 @@
 ﻿(function () {
     'use strict';
 
-    function QuickBlocksController($scope, $http, editorState, navigationService, $location, notificationsService) {
-
-        $scope.submit = function () {
-            apiUrl = Umbraco.Sys.ServerVariables["QuickBlocks"]["QuickBlocksApi"];
-           
-            $http.post(apiUrl, JSON.stringify({ Url: $scope.model.url, HtmlBody: $scope.model.htmlbody }),
-                {
-                    headers: {
-                        'Content-Type': 'application/json'
-                    }
-                }).then(function (response) {
-                    $scope.model.report = response.data;
-                    console.log(response.data);
-                    notificationsService.success('QuickBlocks', 'Your Block List has been created successfully');
-            }, function (response) {
-                console.log('error');
-                notificationsService.success('QuickBlocks', 'There was an error when trying to process your request. Check the console for more details.');
-            });
-
-        };
-
-        $scope.report = function () {
-            apiUrl = Umbraco.Sys.ServerVariables["QuickBlocks"]["QuickBlocksApi"];
-
-            $http.post(apiUrl, JSON.stringify({ Url: $scope.model.url, HtmlBody: $scope.model.htmlbody, ReadOnly: true }),
-                {
-                    headers: {
-                        'Content-Type': 'application/json'
-                    }
-                }).then(function (response) {
-                    $scope.model.report = response.data;
-                    console.log(response.data);
-                    notificationsService.success('QuickBlocks', 'Your Block List has been created successfully');
-                }, function (response) {
-                    console.log('error');
-                    notificationsService.success('QuickBlocks', 'There was an error when trying to process your request. Check the console for more details.');
-                });
-
-        };
-
+    function QuickBlocksController($scope, $http, editorState, navigationService, $location, notificationsService) {        
+        
         var vm = this;
         var apiUrl;
 
+        vm.submitState = "init";
+        vm.reportState = "init";
         vm.changeTab = changeTab;
 
         vm.tabs = [
@@ -67,6 +31,51 @@
                 tab.active = false;
             });
             selectedTab.active = true;
+        };
+
+        $scope.submit = function () {
+            vm.submitState ="busy";
+            apiUrl = Umbraco.Sys.ServerVariables["QuickBlocks"]["QuickBlocksApi"];
+
+            $http.post(apiUrl, JSON.stringify({ Url: $scope.model.url, HtmlBody: $scope.model.htmlbody }),
+                {
+                    headers: {
+                        'Content-Type': 'application/json'
+                    }
+                }).then(function (response) {
+                    $scope.model.report = response.data;
+                    console.log(response.data);
+                    notificationsService.success('QuickBlocks', 'Your Block List has been created successfully');
+                    vm.submitState = "success";
+                }, function (response) {
+                    console.log('error');
+                    notificationsService.success('QuickBlocks', 'There was an error when trying to process your request. Check the console for more details.');
+                    vm.submitState = "error";
+                });
+
+        };
+
+        $scope.report = function () {
+            vm.reportState = "busy";
+            apiUrl = Umbraco.Sys.ServerVariables["QuickBlocks"]["QuickBlocksApi"];
+
+            $http.post(apiUrl, JSON.stringify({ Url: $scope.model.url, HtmlBody: $scope.model.htmlbody, ReadOnly: true }),
+                {
+                    headers: {
+                        'Content-Type': 'application/json'
+                    }
+                }).then(function (response) {
+                    $scope.model.report = response.data;
+                    console.log(response.data);
+                    notificationsService.success('QuickBlocks', 'Your report has been created successfully');
+                    vm.reportState = "success";
+                    changeTab(vm.tabs[2]);
+                }, function (reportState) {
+                    console.log('error');
+                    notificationsService.success('QuickBlocks', 'There was an error when trying to process your request. Check the console for more details.');
+                    vm.reportState = "error";
+                });
+
         };
         
         function init() {

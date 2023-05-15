@@ -4,9 +4,8 @@
         <umb-box-content>
             <ng-form name="tabsForm" val-form-manager>
 
-                <umb-tabs-nav
-                        tabs="vm.tabs"
-                        on-tab-change="vm.changeTab(tab)">
+                <umb-tabs-nav tabs="vm.tabs"
+                              on-tab-change="vm.changeTab(tab)">
                 </umb-tabs-nav>
 
                 <umb-tab-content ng-repeat="tab in vm.tabs"
@@ -25,17 +24,19 @@
                 </umb-tab-content>
 
             </ng-form>
-            
+
             <div class="flex justify-end mt2">
                 <umb-button action="submit()"
                             label="Submit"
                             type="button"
+                            state="vm.submitState"
                             button-style="success">
                 </umb-button>
 
                 <umb-button action="report()"
                             label="Report"
                             type="button"
+                            state="vm.reportState"
                             button-style="info">
                 </umb-button>
             </div>
