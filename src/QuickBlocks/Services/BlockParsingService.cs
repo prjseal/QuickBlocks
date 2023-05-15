@@ -169,7 +169,7 @@ public class BlockParsingService : IBlockParsingService
 
         var properties = new List<PropertyModel>();
 
-        var propertyNodes = doc.DocumentNode.SelectNodes("//*[@data-prop-name][not(ancestor::*[@data-prop-name])]");
+        var propertyNodes = doc.DocumentNode.SelectNodes("//*[@data-prop-name][not(ancestor::*[@data-list-name]) and not(ancestor::*[@data-sub-list-name])]");
 
         var descendants = doc.DocumentNode.Descendants();
         if (descendants == null || !descendants.Any()) return properties;
