@@ -73,6 +73,36 @@ Here are some examples
 </p>
 ```
 
+### Preview View and CSS
+
+If you are using the package `Umbraco.Community.BlockPreview` you can add this to the block list to set the preview path and css on all blocks. This can be set on an individual row too.
+
+```html
+<div data-content-type-name="Home Page" 
+     data-prop-name="Main Content" 
+     data-prop-type="[BlockList] Main Content"
+     data-list-name="Main Content"
+
+     data-use-community-preview="true" 
+     data-preview-css="~/css/styles.css">
+  ...
+</div>
+```
+
+Or if you'd prefer to use your own preview file you can specify it like this
+
+```html
+<div data-content-type-name="Home Page" 
+     data-prop-name="Main Content" 
+     data-prop-type="[BlockList] Main Content"
+     data-list-name="Main Content"
+
+     data-preview-view="~/assets/html/mypreview.html" 
+     data-preview-css="~/css/styles.css">
+  ...
+</div>
+```
+
 ### Specify a different data type
 ```html
 <h2 data-prop-name="Title" data-prop-type="Richtext editor">
