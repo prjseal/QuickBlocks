@@ -38,8 +38,12 @@ public class BlockParsingService : IBlockParsingService
             var useInlineEditingAsDefault = listNode.GetAttributeValue("data-list-inline", "false");
             var validationLimitMin = listNode.GetAttributeValue("data-list-min", "0");
             var validationLimitMax = listNode.GetAttributeValue("data-list-max", "0");
+            var useCommunityPreview = listNode.GetAttributeValue("data-use-community-preview", "false");
+            var previewCss = listNode.GetAttributeValue("data-preview-css", "");
+            var previewView = listNode.GetAttributeValue("data-preview-view", "");
 
-            var list = new BlockListModel(prefix + " " + listName);
+            var list = new BlockListModel(prefix + " " + listName, useCommunityPreview.ToLower() == "true",
+                previewCss: previewCss, previewView: previewView);
             if (!string.IsNullOrWhiteSpace(maxPropertyWidth))
             {
                 list.MaxPropertyWidth = maxPropertyWidth;
@@ -112,6 +116,9 @@ public class BlockParsingService : IBlockParsingService
             var iconClass = rowNode.GetAttributeValue("data-icon-class", "icon-science");
             var iconColour = rowNode.GetAttributeValue("data-icon-colour", "color-indigo");
             var labelProperty = rowNode.GetAttributeValue("data-label-property", "title");
+            var useCommunityPreview = rowNode.GetAttributeValue("data-use-community-preview", "false");
+            var previewCss = rowNode.GetAttributeValue("data-preview-css", "");
+            var previewView = rowNode.GetAttributeValue("data-preview-view", "");
 
             bool.TryParse(hasSettingsValue, out var hasSettings);
 
@@ -122,7 +129,7 @@ public class BlockParsingService : IBlockParsingService
             var row = new RowModel(_shortStringHelper, rowName, rowNode, 
                 settingsName, hasSettings, ignoreNamingConvention, 
                 iconClass: string.Join(" ", (new List<string>() { iconClass, iconColour }).Where(x => !string.IsNullOrWhiteSpace(x))),
-                labelProperty: labelProperty);
+                labelProperty: labelProperty, useCommunityPreview: useCommunityPreview.ToLower() == "true", previewCss: previewCss, previewView: previewView);
 
             var properties = GetProperties(rowNode.OuterHtml);
             row.Properties = properties;

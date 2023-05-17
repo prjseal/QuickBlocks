@@ -355,7 +355,7 @@ public class BlockCreationService : IBlockCreationService
 
         foreach (var row in list.Rows)
         {
-            var block = CreateBlockConfiguration(row, folderStructure);
+            var block = CreateBlockConfiguration(row, folderStructure, list);
 
             if (block == null) continue;
 
@@ -418,7 +418,7 @@ public class BlockCreationService : IBlockCreationService
         return matchingFolder.Id;
     }
 
-    public BlockListConfiguration.BlockConfiguration CreateBlockConfiguration(RowModel row, FolderStructure folderStructure)
+    public BlockListConfiguration.BlockConfiguration CreateBlockConfiguration(RowModel row, FolderStructure folderStructure, BlockListModel list)
     {
         var contentDocType = _contentTypeService.Get(row.Alias);
         if (contentDocType == null)
@@ -443,6 +443,12 @@ public class BlockCreationService : IBlockCreationService
 
         if (contentDocType == null) return null;
 
+        var stylesheet = !string.IsNullOrWhiteSpace(row.PreviewCss) ? row.PreviewCss :
+                            !string.IsNullOrWhiteSpace(list.PreviewCss) ? list.PreviewCss : null;
+
+        var view = !string.IsNullOrWhiteSpace(row.PreviewView) ? row.PreviewView :
+                    !string.IsNullOrWhiteSpace(list.PreviewView) ? list.PreviewView : null;
+
         return new BlockListConfiguration.BlockConfiguration
         {
             ContentElementTypeKey = contentDocType.Key,
@@ -450,8 +456,8 @@ public class BlockCreationService : IBlockCreationService
             Label = "{{ !" + row.LabelProperty + " || " + row.LabelProperty + " == '' ? '" + row.Name + "' : " + row.LabelProperty + " }}",
             EditorSize = DefaultEditorSize,
             ForceHideContentEditorInOverlay = false,
-            Stylesheet = null,
-            View = null,
+            Stylesheet = stylesheet,
+            View = view,
             IconColor = DefaultIconColour,
             BackgroundColor = DefaultBackgroundColour
         };

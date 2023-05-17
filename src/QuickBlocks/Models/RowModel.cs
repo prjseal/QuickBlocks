@@ -19,10 +19,14 @@ public class RowModel
     public string IconClass { get; set; }
     public List<BlockListModel> SubLists { get; set; }
     public string LabelProperty { get; set; }
+    public string PreviewView { get; set; } 
+    public string PreviewCss { get; set; } 
 
     public RowModel(IShortStringHelper shortStringHelper, string name, HtmlNode node, 
         string settingsName, bool hasSettings = true, bool ignoreNamingConvention = false, 
-        string suffix = "Row", string settingsSuffix = "Settings", string iconClass = "icon-science", string labelProperty = "Title")
+        string suffix = "Row", string settingsSuffix = "Settings", 
+        string iconClass = "icon-science", string labelProperty = "Title",
+        bool useCommunityPreview = false, string previewCss = "", string previewView = "")
     {
         IgnoreNamingConvention = ignoreNamingConvention;
         HasSettings = hasSettings;
@@ -38,6 +42,14 @@ public class RowModel
             SettingsName = hasSettings ? Name + " " + settingsSuffix : "";
         }
 
+        PreviewCss = previewCss;
+        PreviewView = !string.IsNullOrWhiteSpace(PreviewView) ? previewView : "";
+
+        if (useCommunityPreview && string.IsNullOrWhiteSpace(PreviewView))
+        {
+            PreviewView = "~/App_Plugins/Umbraco.Community.BlockPreview/views/block-preview.html";
+        }
+        
         Alias = Name.Replace(" ", "").ToSafeAlias(shortStringHelper, true);
         SettingsAlias = hasSettings ? SettingsName.Replace(" ", "").ToSafeAlias(shortStringHelper, true) : "";
         Html = node.OuterHtml;

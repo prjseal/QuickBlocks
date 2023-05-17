@@ -13,9 +13,20 @@ public class BlockListModel
     public int ValidationLimitMin { get; set; }
     public int ValidationLimitMax { get; set; }
     public string Html { get; set; }
+    public string PreviewView { get; set; }
+    public string PreviewCss { get; set; }
 
-    public BlockListModel(string name)
+    public BlockListModel(string name, bool useCommunityPreview = false, 
+        string previewCss = "", string previewView = "")
     {
         Name = name;
+
+        PreviewCss = previewCss;
+        PreviewView = !string.IsNullOrWhiteSpace(PreviewView) ? previewView : "";
+
+        if (useCommunityPreview && string.IsNullOrWhiteSpace(PreviewView))
+        {
+            PreviewView = "~/App_Plugins/Umbraco.Community.BlockPreview/views/block-preview.html";
+        }
     }
 }
