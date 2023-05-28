@@ -2,16 +2,19 @@
 
 using Umbraco.Cms.Core.Strings;
 using Umbraco.Community.QuickBlocks.Models;
+using Umbraco.Community.QuickBlocks.Services.Resolvers;
 
 namespace Umbraco.Community.QuickBlocks.Services;
 
 public class BlockParsingService : IBlockParsingService
 {
     private readonly IShortStringHelper _shortStringHelper;
+    private readonly IDataTypeNameResolver _dataTypeNameResolver;
 
-    public BlockParsingService(IShortStringHelper shortStringHelper)
+    public BlockParsingService(IShortStringHelper shortStringHelper, IDataTypeNameResolver dataTypeNameResolver)
     {
         _shortStringHelper = shortStringHelper;
+        _dataTypeNameResolver = dataTypeNameResolver;
     }
 
     public List<BlockListModel> GetLists(string html, bool isNestedList, string prefix = "[BlockList]")
@@ -188,29 +191,7 @@ public class BlockParsingService : IBlockParsingService
 
             if (!string.IsNullOrWhiteSpace(itemName) && string.IsNullOrWhiteSpace(itemType))
             {
-                switch (propertyNode.OriginalName.ToLower())
-                {
-                    case "img":
-                        itemType = "Image Media Picker";
-                        break;
-                    case "h1":
-                    case "h2":
-                    case "h3":
-                    case "h4":
-                    case "h5":
-                    case "h6":
-                        itemType = "Textstring";
-                        break;
-                    case "p":
-                        itemType = "Richtext editor";
-                        break;
-                    case "a":
-                        itemType = "Single Url Picker";
-                        break;
-                    default:
-                        itemType = "Textstring";
-                        break;
-                }
+                itemType = _dataTypeNameResolver.GetDataTypeName(propertyNode.OriginalName.ToLower());
             }
 
             if (!string.IsNullOrWhiteSpace(itemName))

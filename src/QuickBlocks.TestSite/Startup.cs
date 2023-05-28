@@ -1,3 +1,5 @@
+using Umbraco.Community.QuickBlocks;
+
 namespace QuickBlocks.TestSite
 {
     public class Startup
@@ -34,6 +36,12 @@ namespace QuickBlocks.TestSite
                 .AddWebsite()
                 .AddComposers()
                 .Build();
+
+            // Example: hot to modify the default data type name
+            //services.Configure<QuickBlocksDefaultOptions>(cfg =>
+            //{
+            //    cfg.DefaultDataTypeName = "Textarea";
+            //});
         }
 
         /// <summary>
