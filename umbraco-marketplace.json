@@ -7,7 +7,22 @@
     "Name": "Paul Seal",
     "Description": "Paul is an Umbraco Master and 5 x Umbraco MVP who loves making tutorials and small Umbraco packages. He works for the Umbraco Gold Partner ClerksWell",
     "Url": "https://github.com/prjseal",
-    "ImageUrl": "https://github.com/prjseal.png"
+    "ImageUrl": "https://github.com/prjseal.png",
+    "Contributors": [
+      { 
+        "Name": "Paul Seal",
+        "Url": "https://codeshare.co.uk"
+      },
+      { 
+        "Name": "ClerksWell",
+        "Url": "https://clerkswell.com"
+      },
+      { 
+        "Name": "Mario Lopez",
+        "Url": "https://github.com/skartknet"
+      }
+    ],
+    "SyncContributorsFromRepository": true
   },
   "Category": "Developer Tools",
   "Description": "A package for quickly building block list based Umbraco websites all from data attributes in your HTMl",
