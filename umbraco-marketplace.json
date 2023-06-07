@@ -1,25 +1,14 @@
 {
   "$schema": "https://marketplace.umbraco.com/umbraco-marketplace-schema.json",
+  "AlternatePackageNames": [
+    "QuickBlocks"
+  ],
   "AuthorDetails": {
     "Name": "Paul Seal",
-    "ImageUrl": "https://github.com/prjseal.png",
+    "Description": "Paul is an Umbraco Master and 5 x Umbraco MVP who loves making tutorials and small Umbraco packages. He works for the Umbraco Gold Partner ClerksWell",
     "Url": "https://github.com/prjseal",
-    "Description": "Paul is an Umbraco Master and 5 x Umbraco MVP who loves making tutorials and small Umbraco packages. He works for the Umbraco Gold Partner ClerksWell"
+    "ImageUrl": "https://github.com/prjseal.png"
   },
-  "Contributors": [
-    {
-      "Name": "Paul Seal",
-      "Url": "https://codeshare.co.uk"
-    },
-    {
-      "Name": "ClerksWell",
-      "Url": "https://www.clerkswell.com"
-    },
-    {
-      "Name": "Mario Lopez",
-      "Url": "https://github.com/skartknet"
-    }
-  ],
   "Category": "Developer Tools",
   "Description": "A package for quickly building block list based Umbraco websites all from data attributes in your HTMl",
   "LicenseTypes": [ "Free" ],
@@ -27,5 +16,27 @@
   "PackageType": "Package",
   "Tags": [ "HTML", "Fast", "Quick", "Blocks" ],
   "Title": "QuickBlocks",
+  "Screenshots": [
+    {
+      "ImageUrl": "https://raw.githubusercontent.com/prjseal/QuickBlocks/main/images/1.png",
+      "Caption": "QuickBlocks Dashboard with some custom HTML with data attributes in it."
+    },
+    {
+      "ImageUrl": "https://raw.githubusercontent.com/prjseal/QuickBlocks/main/images/2.png",
+      "Caption": "Block List automatically created for you with a portfolio row"
+    },
+    {
+      "ImageUrl": "https://raw.githubusercontent.com/prjseal/QuickBlocks/main/images/3.png",
+      "Caption": "The block list data type is used for a property on the home page"
+    },
+    {
+      "ImageUrl": "https://raw.githubusercontent.com/prjseal/QuickBlocks/main/images/4.png",
+      "Caption": "Editing a portfolio row with properties including another list"
+    },
+    {
+      "ImageUrl": "https://raw.githubusercontent.com/prjseal/QuickBlocks/main/images/5.jpg",
+      "Caption": "Backoffice view of a portfolio item being edited"
+    }
+  ],
   "VideoUrl": "https://www.youtube.com/watch?v=Ja7ynDvCGQY"
 }
