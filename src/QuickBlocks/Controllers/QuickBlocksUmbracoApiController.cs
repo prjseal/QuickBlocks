@@ -150,17 +150,17 @@ public class QuickBlocksApiController : UmbracoAuthorizedApiController
                     newContentType.SetDefaultTemplate(template);
                     _contentTypeService.Save(newContentType);
                 }
-
+                
                 template.SetMasterTemplate(masterTemplate);
                 _fileService.SaveTemplate(template);
 
                 var contentTypeDoc = new HtmlDocument();
                 contentTypeDoc.LoadHtml(contentType.Html);
 
+                
                 var templateContent = new StringBuilder();
                 templateContent.AppendLine("@using Umbraco.Cms.Web.Common.PublishedModels;");
-                templateContent.AppendLine("@using Umbraco.Cms.Web.Common.PublishedModels;");
-                templateContent.AppendLine("@inherits Umbraco.Cms.Web.Common.Views.UmbracoViewPage<ContentModels.HomePage>");
+                templateContent.AppendLine($"@inherits Umbraco.Cms.Web.Common.Views.UmbracoViewPage<ContentModels.{template.Alias}>");
                 templateContent.AppendLine("    @using ContentModels = Umbraco.Cms.Web.Common.PublishedModels;");
                 templateContent.AppendLine("@{");
                 templateContent.AppendLine("    Layout = \"master.cshtml\";");
