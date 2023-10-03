@@ -108,6 +108,8 @@ public class BlockCreationService : IBlockCreationService
 
     public void RenderProperties(HtmlNodeCollection properties, string context)
     {
+        if (properties == null) return;
+
         foreach (var item in properties)
         {
             var name = item.Attributes["data-prop-name"].Value;
