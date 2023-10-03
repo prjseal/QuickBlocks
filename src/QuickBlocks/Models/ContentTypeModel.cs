@@ -13,6 +13,7 @@ public class ContentTypeModel
     public IEnumerable<PropertyModel> Properties { get; set; }
     public IEnumerable<BlockListModel> Lists { get; set; }
     public string Html { get; set; }
+    public string Message { get; set; }
 
     public ContentTypeModel(IShortStringHelper shortStringHelper, string name, string html)
     {

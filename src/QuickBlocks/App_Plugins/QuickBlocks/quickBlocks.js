@@ -45,11 +45,16 @@
                 }).then(function (response) {
                     $scope.model.report = response.data;
                     console.log(response.data);
-                    notificationsService.success('QuickBlocks', 'Your Block List has been created successfully');
+                    if (response.data?.message) {
+                        notificationsService.error('QuickBlocks', response.data.message);
+                    } else {
+                        notificationsService.success('QuickBlocks', 'Your Block List has been created successfully');
+                    }
+
                     vm.submitState = "success";
                 }, function (response) {
                     console.log('error');
-                    notificationsService.success('QuickBlocks', 'There was an error when trying to process your request. Check the console for more details.');
+                    notificationsService.error('QuickBlocks', 'There was an error when trying to process your request. Check the console for more details.');
                     vm.submitState = "error";
                 });
 
