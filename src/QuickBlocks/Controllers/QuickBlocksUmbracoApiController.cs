@@ -2,10 +2,12 @@
 
 using HtmlAgilityPack;
 
+using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Logging;
 
 using Umbraco.Cms.Core.Services;
+using Umbraco.Cms.Core.Strings;
 using Umbraco.Cms.Web.BackOffice.Controllers;
 using Umbraco.Community.QuickBlocks.Models;
 using Umbraco.Community.QuickBlocks.Services;
@@ -19,18 +21,25 @@ public class QuickBlocksApiController : UmbracoAuthorizedApiController
     private readonly ILogger<QuickBlocksApiController> _logger;
     private readonly IFileService _fileService;
     private readonly IContentTypeService _contentTypeService;
+    private readonly IWebHostEnvironment _webHostEnvironment;
+    private readonly IShortStringHelper _shortStringHelper;
+
 
     public QuickBlocksApiController(IBlockCreationService blockCreationService,
         IBlockParsingService blockParsingService,
         ILogger<QuickBlocksApiController> logger,
         IFileService fileService,
-        IContentTypeService contentTypeService)
+        IContentTypeService contentTypeService,
+        IWebHostEnvironment webHostEnvironment,
+        IShortStringHelper shortStringHelper)
     {
         _blockCreationService = blockCreationService;
         _blockParsingService = blockParsingService;
         _logger = logger;
         _fileService = fileService;
         _contentTypeService = contentTypeService;
+        _webHostEnvironment = webHostEnvironment;
+        _shortStringHelper = shortStringHelper;
     }
 
     //https://localhost:44306/umbraco/backoffice/api/quickblocksapi/build/
@@ -50,6 +59,11 @@ public class QuickBlocksApiController : UmbracoAuthorizedApiController
         }
         else
         {
+            string contentRootPath = _webHostEnvironment.ContentRootPath;
+            if (!System.IO.File.Exists(Path.Combine(contentRootPath,quickBlocksInstruction.Url)))
+            {
+                return new ActionResult<ContentTypeModel>(new ContentTypeModel(_shortStringHelper,"",""){Message = "The specified file does not exist"});
+            }
             doc.Load(quickBlocksInstruction.Url);
         }
 
