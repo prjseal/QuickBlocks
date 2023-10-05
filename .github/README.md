@@ -130,6 +130,7 @@ Or if you'd prefer to use your own preview file you can specify it like this
 
 ### Create a list property inside a row
 In the sub list items, we don't need to specify the property location, we only do that for row or page properties.
+**NOTE:** The data-sub-list-name and the data-prop-type assume the same name with '[BlockList] ' prepended to the data-prop-type or the generation will fail.
 
 ```html
 <div data-row-name="Services">
