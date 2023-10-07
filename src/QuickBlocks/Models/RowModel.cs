@@ -50,8 +50,8 @@ public class RowModel
             PreviewView = "~/App_Plugins/Umbraco.Community.BlockPreview/views/block-preview.html";
         }
         
-        Alias = Name.Replace(" ", "").ToSafeAlias(shortStringHelper, true);
-        SettingsAlias = hasSettings ? SettingsName.Replace(" ", "").ToSafeAlias(shortStringHelper, true) : "";
+        Alias = Name.ToCleanString(shortStringHelper, CleanStringType.Alias | CleanStringType.UmbracoCase).ToSafeAlias(shortStringHelper, true);
+        SettingsAlias = hasSettings ? SettingsName.ToCleanString(shortStringHelper, CleanStringType.Alias | CleanStringType.UmbracoCase).ToSafeAlias(shortStringHelper, true) : "";
         Html = node.OuterHtml;
         IconClass = iconClass;
         LabelProperty = labelProperty.Replace(" ", "").ToSafeAlias(shortStringHelper, true);
