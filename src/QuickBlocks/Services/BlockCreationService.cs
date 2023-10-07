@@ -162,6 +162,9 @@ public class BlockCreationService : IBlockCreationService
                     {
                         ReplaceAttributesAndInnerHtmlWithValue(item, string.IsNullOrWhiteSpace(propValue) ? ".Url()" : propValue, replaceMarker, objectReference, replaceInner);
                     }
+
+                    WrapNullCheck(objectReference, item);
+
                     break;
                 case "p":
                     item.ParentNode.ReplaceChild(text, item);
@@ -199,12 +202,18 @@ public class BlockCreationService : IBlockCreationService
                         openingHtmlString.AppendLine("    {");
                         var openingHtmlNode = HtmlTextNode.CreateNode(openingHtmlString.ToString());
                         item.ParentNode.InsertBefore(openingHtmlNode, item);
+                        
+                        WrapNullCheck(originalObjectReference, item);
 
                         var closingHtmlString = new StringBuilder();
                         closingHtmlString.AppendLine("    }");
                         closingHtmlString.AppendLine("}");
                         var closingHtmlNode = HtmlTextNode.CreateNode(closingHtmlString.ToString());
                         item.ParentNode.InsertAfter(closingHtmlNode, item);
+                    }
+                    else
+                    {
+                        WrapNullCheck(originalObjectReference, item);
                     }
 
                     if (!string.IsNullOrWhiteSpace(replaceMarker))
@@ -251,6 +260,23 @@ public class BlockCreationService : IBlockCreationService
             //}
         }
     }
+
+    private static void WrapNullCheck(string originalObjectReference, HtmlNode item)
+    {
+        var openingHtmlString = new StringBuilder();
+        openingHtmlString.AppendLine("@if(" + originalObjectReference + " != null)");
+        openingHtmlString.AppendLine("{");
+        HtmlNode openingHtmlNode;
+        openingHtmlNode = HtmlTextNode.CreateNode(openingHtmlString.ToString());
+        item.ParentNode.InsertBefore(openingHtmlNode, item);
+
+        var closingHtmlString = new StringBuilder();
+        closingHtmlString.AppendLine("}");
+        HtmlNode closingHtmlNode;
+        closingHtmlNode = HtmlTextNode.CreateNode(closingHtmlString.ToString());
+        item.ParentNode.InsertAfter(closingHtmlNode, item);
+    }
+
 
     public void ReplaceAttributesAndInnerHtmlWithValue(HtmlNode item, string propValue, string replaceMarker, string objectReference, string replaceInner)
     {
