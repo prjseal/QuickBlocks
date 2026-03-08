@@ -11,6 +11,7 @@
 4. [Architecture](#4-architecture)
 5. [The Umbraco Developer MCP Server](#5-the-umbraco-developer-mcp-server)
 6. [Exact MCP Tools Used](#6-exact-mcp-tools-used)
+6a. [The Razor Template and Partial Pattern](#6a-the-razor-template-and-partial-pattern)
 7. [How the Skill Works — Step by Step](#7-how-the-skill-works--step-by-step)
 8. [The Skill Definition](#8-the-skill-definition)
 9. [MCP Configuration](#9-mcp-configuration)
@@ -29,9 +30,12 @@ Building a block-list-based Umbraco site from an HTML prototype requires creatin
 - Element content types (one per block)
 - Settings content types (one per block)
 - Block list data types (one per list, referencing the above by GUID)
-- Razor partial views (one per block, with correct model casts)
 - A page content type with the correct block list properties
-- Master and content templates
+- A master template (`master.cshtml`) — the full HTML shell with `@RenderBody()` and `@await Html.PartialAsync(...)` for nav/footer
+- A content page template — inherits master, calls `@Html.GetBlockListHtml(Model.PropertyAlias)` for each block list
+- Structural partials — navigation, footer, and other reusable HTML regions
+- A block list dispatcher (`blocklist/default.cshtml`) — loops block list items and routes each to the right component partial by convention
+- Block component partials — one per block type, casting `BlockListItem` to the typed content/settings models
 - A folder structure to keep it organised
 
 Doing this by hand for a site with 10–15 block types takes hours and is highly error-prone. QuickBlocks automates it from an annotated HTML file.
@@ -161,14 +165,18 @@ The following MCP tools map directly to the steps QuickBlocks performs in C#:
 
 | QuickBlocks (C#) | MCP Tool |
 |---|---|
-| `IFileService.SaveTemplate()` | `create-template` |
-| Template query helpers | `get-template-query-settings` |
+| `_fileService.CreateTemplateWithIdentity("Master", "master", ...)` | `create-template` (name: `Master`, alias: `master`) |
+| `_fileService.CreateTemplateForContentType(alias, name)` | `create-template` (name: page name, alias: page alias) |
+| `template.SetMasterTemplate(masterTemplate)` | `create-template` with `masterTemplateAlias: "master"` |
+| `_fileService.SaveTemplate(template)` | `update-template` |
 
 ### Partial views
 
 | QuickBlocks (C#) | MCP Tool |
 |---|---|
-| `IFileService.SavePartialView()` | `create-partial-view` (via `partial-view` collection) |
+| `_fileService.SavePartialView()` (nav/footer) | `create-partial-view` at `Views/Partials/{name}.cshtml` |
+| `StreamWriter` to `Views/Partials/blocklist/Components/{alias}.cshtml` | `create-partial-view` at `Views/Partials/blocklist/Components/{alias}.cshtml` |
+| Hard-coded `Views/Partials/blocklist/default.cshtml` | `create-partial-view` at `Views/Partials/blocklist/default.cshtml` |
 
 ### Verification
 
@@ -177,6 +185,215 @@ The following MCP tools map directly to the steps QuickBlocks performs in C#:
 | Confirm block list was created | `get-data-type` |
 | Confirm element type exists | `get-document-type` |
 | Check Umbraco version compatibility | `get-server-information` (called automatically on startup) |
+
+---
+
+## 6a. The Razor Template and Partial Pattern
+
+This is the section most commonly misunderstood when comparing QuickBlocks to a manual build. QuickBlocks generates **five distinct types of Razor file**, each with a specific structure and a specific relationship to the others. The Claude skill must replicate all five.
+
+### The five file types
+
+```
+master.cshtml                              ← Master template (Layout = null)
+{pageAlias}.cshtml                         ← Content page template (Layout = "master.cshtml")
+Views/Partials/{name}.cshtml               ← Nav, footer, and other structural partials
+Views/Partials/blocklist/default.cshtml    ← Block list dispatcher (loops blocks → components)
+Views/Partials/blocklist/Components/{alias}.cshtml  ← One per block type
+```
+
+---
+
+### 1. Master template (`master.cshtml`)
+
+QuickBlocks takes the **full HTML document** (the prototype with nav, header, footer, and a placeholder for the main content) and turns it into the master template.
+
+**Three transformations are applied:**
+
+**a) Main content area → `@RenderBody()`**
+
+The element marked with `data-content-type-name` is the placeholder for page-specific content. QuickBlocks replaces the entire element with `@RenderBody()`:
+
+```razor
+@* Before *@
+<main data-content-type-name="Home Page">
+    <!-- page content placeholder -->
+</main>
+
+@* After (in master.cshtml) *@
+@RenderBody()
+```
+
+**b) Nav/footer elements → `@await Html.PartialAsync(...)`**
+
+Elements marked with `data-partial-name` are extracted and replaced with a partial call:
+
+```razor
+@* Before *@
+<nav data-partial-name="navigation">
+    <a href="/">Home</a>
+    <a href="/about">About</a>
+</nav>
+
+@* After (in master.cshtml) *@
+@await Html.PartialAsync("~/Views/Partials/navigation.cshtml")
+```
+
+The nav HTML itself is saved as `Views/Partials/navigation.cshtml` with a standard `@inherits UmbracoViewPage` header.
+
+**c) All `data-*` attributes are stripped** before saving.
+
+**Resulting `master.cshtml` structure:**
+
+```razor
+@* Auto-generated by QuickBlocks / Claude skill *@
+<!DOCTYPE html>
+<html>
+<head>...</head>
+<body>
+    @await Html.PartialAsync("~/Views/Partials/navigation.cshtml")
+
+    @RenderBody()
+
+    @await Html.PartialAsync("~/Views/Partials/footer.cshtml")
+</body>
+</html>
+```
+
+**MCP call:** `create-template` with `name: "Master"`, `alias: "master"`, and the above as `content`.
+
+---
+
+### 2. Content page template (`{pageAlias}.cshtml`)
+
+The content that *was* inside the `data-content-type-name` element becomes the content page template. This template:
+
+- Sets `Layout = "master.cshtml"` (Umbraco passes this through `template.SetMasterTemplate()`)
+- Inherits from the page's strongly-typed content model
+- Calls `@Html.GetBlockListHtml(Model.{PropertyAlias})` for each block list property
+
+**Resulting template structure:**
+
+```razor
+@using Umbraco.Cms.Web.Common.PublishedModels;
+@inherits Umbraco.Cms.Web.Common.Views.UmbracoViewPage<ContentModels.HomePage>
+    @using ContentModels = Umbraco.Cms.Web.Common.PublishedModels;
+@{
+    Layout = "master.cshtml";
+}
+
+<main>
+    <div class="main-content-wrapper">
+        @Html.GetBlockListHtml(Model.MainContent)
+    </div>
+</main>
+```
+
+Where `@Html.GetBlockListHtml(Model.MainContent)` was generated by `RenderListPropertyCalls()` — replacing the element that originally had `data-list-name="Main Content"` with this call.
+
+**MCP call:** `create-template` with `name: "Home Page"`, `alias: "homePage"`, `masterTemplateAlias: "master"`, and the above as `content`.
+
+---
+
+### 3. Navigation and footer partials
+
+Any element in the master HTML marked `data-partial-name` is extracted and saved as its own partial view file at `Views/Partials/{name}.cshtml`:
+
+```razor
+@inherits Umbraco.Cms.Web.Common.Views.UmbracoViewPage
+
+<nav class="main-nav">
+    <a href="/">Home</a>
+    <a href="/about">About</a>
+</nav>
+```
+
+These are **structural partials** — they don't receive a typed model unless Claude generates one. For the initial scaffold, a plain `@inherits UmbracoViewPage` (non-generic) is correct.
+
+**MCP call:** `create-partial-view` at path `Views/Partials/navigation.cshtml`.
+
+---
+
+### 4. Block list dispatcher (`Views/Partials/blocklist/default.cshtml`)
+
+This is a **fixed file** — it does not vary per site. It is the bridge between `@Html.GetBlockListHtml()` and the individual block component partials. QuickBlocks creates it once; the Claude skill should always create it.
+
+```razor
+@inherits Umbraco.Cms.Web.Common.Views.UmbracoViewPage<Umbraco.Cms.Core.Models.Blocks.BlockListModel>
+@{
+    if (Model?.Any() != true) { return; }
+}
+<div class="umb-block-list">
+    @foreach (var block in Model)
+    {
+        if (block?.ContentUdi == null) { continue; }
+        var data = block.Content;
+
+        @await Html.PartialAsync("blocklist/Components/" + data.ContentType.Alias, block)
+    }
+</div>
+```
+
+This file reads each block's content type alias and renders the matching component partial by convention. No configuration required — adding a new block type just means adding a new file in `blocklist/Components/`.
+
+**MCP call:** `create-partial-view` at path `Views/Partials/blocklist/default.cshtml`.
+
+---
+
+### 5. Block component partials (`Views/Partials/blocklist/Components/{alias}.cshtml`)
+
+One file per block type. Each receives the `BlockListItem` model, casts it to the specific content and settings types, checks `settings.Hide`, and renders the block's HTML with Razor property bindings:
+
+```razor
+@inherits Umbraco.Cms.Web.Common.Views.UmbracoViewPage<Umbraco.Cms.Core.Models.Blocks.BlockListItem>
+
+@{
+    var row = (HeroRow)Model.Content;
+    var settings = (HeroSettings)Model.Settings;
+
+    if (settings.Hide) { return; }
+}
+
+<section class="hero">
+    <h1>@row.Title</h1>
+    @Html.Raw(row.BodyText)
+    <img src="@Url.GetCropUrl(row.BackgroundImage, 1920, 600)" alt="@row.BackgroundImage?.Name" />
+    @if (row.CallToAction != null)
+    {
+        <a href="@row.CallToAction.Url" target="@row.CallToAction.Target">@row.CallToAction.Name</a>
+    }
+</section>
+```
+
+**MCP call:** `create-partial-view` at path `Views/Partials/blocklist/Components/heroRow.cshtml`.
+
+---
+
+### How the five files connect at render time
+
+```
+Request for /home
+    ↓
+Umbraco selects homePage.cshtml (content template)
+    ↓
+Layout = "master.cshtml" wraps it
+    ↓
+master.cshtml renders:
+    @await Html.PartialAsync("~/Views/Partials/navigation.cshtml")
+    @RenderBody()          ← homePage.cshtml renders here
+    @await Html.PartialAsync("~/Views/Partials/footer.cshtml")
+    ↓
+Inside @RenderBody(), homePage.cshtml calls:
+    @Html.GetBlockListHtml(Model.MainContent)
+    ↓
+Umbraco finds default.cshtml (the dispatcher)
+    ↓
+default.cshtml loops each block and calls:
+    @await Html.PartialAsync("blocklist/Components/heroRow", block)
+    @await Html.PartialAsync("blocklist/Components/servicesRow", block)
+    ↓
+Each component partial renders its HTML
+```
 
 ---
 
@@ -346,9 +563,12 @@ Execute in this exact order (each step depends on the previous):
 3. `create-element-type` for each block's settings element type (with a Hide property)
 4. `create-data-type` for each block list (using GUIDs from step 2–3)
 5. `create-document-type` for the page type
-6. `create-template` for the Master template
-7. `create-template` for the page content template
-8. Generate and `create-partial-view` for each block
+6. `create-template` — Master template (see Step 7a)
+7. `create-template` — Content page template (see Step 7b)
+8. `create-partial-view` — Navigation partial (see Step 7c)
+9. `create-partial-view` — Footer partial (see Step 7c)
+10. `create-partial-view` — `Views/Partials/blocklist/default.cshtml` (see Step 7d)
+11. `create-partial-view` — one per block type in `Views/Partials/blocklist/Components/` (see Step 7e)
 
 ## Step 6 — Block List Data Type JSON (Umbraco 17)
 
@@ -385,30 +605,118 @@ Use this exact `configuration` structure for `create-data-type`:
 
 IMPORTANT: Both `editorAlias` and `editorUiAlias` are required in Umbraco 17.
 
-## Step 7 — Generate Razor Partial Views
+## Step 7a — Create the Master Template
 
-For each block, generate a `.cshtml` file and push it via `create-partial-view`.
-
-Template pattern:
+The master template is the full HTML shell of the site (containing nav, header, footer, etc.).
+The main content area is replaced with `@RenderBody()`. Nav/footer elements become
+`@await Html.PartialAsync(...)` calls. All `data-*` attributes are stripped.
 
 ```razor
-@using ContentModels = Umbraco.Cms.Web.Common.PublishedModels;
-@inherits Umbraco.Cms.Web.Common.Views.UmbracoViewPage<Umbraco.Cms.Core.Models.Blocks.BlockListItem>
+@* master.cshtml — no @inherits, no Layout *@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Site Name</title>
+</head>
+<body>
+    @await Html.PartialAsync("~/Views/Partials/navigation.cshtml")
+
+    @RenderBody()
+
+    @await Html.PartialAsync("~/Views/Partials/footer.cshtml")
+</body>
+</html>
+```
+
+MCP call: `create-template` with `name: "Master"`, `alias: "master"`, and the above as `content`.
+
+## Step 7b — Create the Content Page Template
+
+The content page template contains only the main content area HTML (what was inside the
+element marked as the page's content region). It inherits `master.cshtml` and calls
+`@Html.GetBlockListHtml(Model.{PropertyAlias})` for each block list property on the page:
+
+```razor
+@using Umbraco.Cms.Web.Common.PublishedModels;
+@inherits Umbraco.Cms.Web.Common.Views.UmbracoViewPage<ContentModels.{PageAlias}>
+    @using ContentModels = Umbraco.Cms.Web.Common.PublishedModels;
 @{
-    var content = Model.Content as ContentModels.{PascalAlias};
-    if (content == null) { return; }
+    Layout = "master.cshtml";
+}
+
+<main>
+    @Html.GetBlockListHtml(Model.{BlockListPropertyAlias})
+</main>
+```
+
+MCP call: `create-template` with `name: "{Page Name}"`, `alias: "{pageAlias}"`,
+`masterTemplateAlias: "master"`, and the above as `content`.
+
+## Step 7c — Create Structural Partials (Nav, Footer, etc.)
+
+For each element in the original HTML that should be a reusable partial (navigation, footer,
+cookie banner, etc.), create a standalone partial view:
+
+```razor
+@inherits Umbraco.Cms.Web.Common.Views.UmbracoViewPage
+
+<nav class="main-nav">
+    {original HTML of the nav element, data-* attributes stripped}
+</nav>
+```
+
+MCP call: `create-partial-view` at `Views/Partials/{name}.cshtml` for each structural partial.
+
+## Step 7d — Create the Block List Dispatcher
+
+This file is always the same. It is the bridge between `@Html.GetBlockListHtml()` and the
+individual block component partials. Create it once — it routes every block by convention:
+
+```razor
+@inherits Umbraco.Cms.Web.Common.Views.UmbracoViewPage<Umbraco.Cms.Core.Models.Blocks.BlockListModel>
+@{
+    if (Model?.Any() != true) { return; }
+}
+<div class="umb-block-list">
+    @foreach (var block in Model)
+    {
+        if (block?.ContentUdi == null) { continue; }
+        var data = block.Content;
+
+        @await Html.PartialAsync("blocklist/Components/" + data.ContentType.Alias, block)
+    }
+</div>
+```
+
+MCP call: `create-partial-view` at `Views/Partials/blocklist/default.cshtml`.
+
+## Step 7e — Create Block Component Partials
+
+One file per block type. Each casts the `BlockListItem` to the block's content and settings
+types, checks `settings.Hide`, and renders the block's HTML with Razor property bindings:
+
+```razor
+@inherits Umbraco.Cms.Web.Common.Views.UmbracoViewPage<Umbraco.Cms.Core.Models.Blocks.BlockListItem>
+
+@{
+    var row = ({ContentTypePascalAlias})Model.Content;
+    var settings = ({SettingsTypePascalAlias})Model.Settings;
+
+    if (settings.Hide) { return; }
 }
 
 {HTML with properties replaced by Razor expressions}
 ```
 
 Property rendering rules:
-- `Textstring` → `@content.{PropertyAlias}`
-- `Rich Text Editor` → `@Html.Raw(content.{PropertyAlias})`
-- `Image Media Picker` → `<img src="@Url.GetCropUrl(content.{PropertyAlias}, 800, 600)" alt="@content.{PropertyAlias}?.Name" />`
-- `Single URL Picker` → `<a href="@content.{PropertyAlias}?.Url" target="@content.{PropertyAlias}?.Target">@content.{PropertyAlias}?.Name</a>`
-- `True/False` → `@if (content.{PropertyAlias}) { ... }`
-- Nested block list → `@await Html.GetBlockListHtmlAsync(content.{PropertyAlias})`
+- `Textstring` → `@row.{PropertyAlias}`
+- `Rich Text Editor` → `@Html.Raw(row.{PropertyAlias})`
+- `Image Media Picker` → `<img src="@Url.GetCropUrl(row.{PropertyAlias}, 800, 600)" alt="@row.{PropertyAlias}?.Name" />`
+- `Single URL Picker` → `<a href="@row.{PropertyAlias}?.Url" target="@row.{PropertyAlias}?.Target">@row.{PropertyAlias}?.Name</a>`
+- `True/False` → `@if (row.{PropertyAlias}) { ... }`
+- Nested block list → `@Html.GetBlockListHtml(row.{PropertyAlias})`
+
+MCP call: `create-partial-view` at `Views/Partials/blocklist/Components/{alias}.cshtml`.
 
 ## Step 8 — Verify and Report
 
@@ -424,9 +732,12 @@ Report a summary table:
 | Element type | heroSettings | ✓ Created |
 | Block list data type | Main Content | ✓ Created |
 | Page document type | homePage | ✓ Created |
-| Partial view | heroRow.cshtml | ✓ Created |
-| Template | Master | ✓ Created |
-| Template | Home Page | ✓ Created |
+| Template | master.cshtml | ✓ Created |
+| Template | homePage.cshtml | ✓ Created |
+| Structural partial | navigation.cshtml | ✓ Created |
+| Structural partial | footer.cshtml | ✓ Created |
+| Block list dispatcher | blocklist/default.cshtml | ✓ Created |
+| Component partial | blocklist/Components/heroRow.cshtml | ✓ Created |
 
 ## Error Handling
 
@@ -587,45 +898,135 @@ Does this look right? Reply YES to proceed, or tell me what to change.
 **After confirmation, MCP calls in order:**
 
 ```
-1. create-document-type-folder  → "Elements"
-2. create-document-type-folder  → "Elements/Content Models"
-3. create-document-type-folder  → "Elements/Settings Models"
-4. create-document-type-folder  → "Pages"
-5. get-all-data-types           → resolve GUIDs for Image Media Picker, Textstring, etc.
-6. create-element-type          → heroRow
-7. create-element-type          → heroSettings
-8. create-element-type          → servicesRow
-9. create-element-type          → serviceCardItem
-10. create-data-type            → "Service Grid" (block list, references serviceCardItem)
-11. create-data-type            → "Main Content" (block list, references heroRow + servicesRow)
-12. create-document-type        → homePage (with mainContent property)
-13. create-template             → Master
-14. create-template             → Home Page
-15. create-partial-view         → heroRow.cshtml
-16. create-partial-view         → servicesRow.cshtml
-17. create-partial-view         → serviceCardItem.cshtml
-18. get-document-type           → verify heroRow ✓
-19. get-document-type           → verify servicesRow ✓
-20. get-data-type               → verify Main Content ✓
+1.  create-document-type-folder  → "Elements"
+2.  create-document-type-folder  → "Elements/Content Models"
+3.  create-document-type-folder  → "Elements/Settings Models"
+4.  create-document-type-folder  → "Pages"
+5.  get-all-data-types           → resolve GUIDs for Image Media Picker, Textstring, etc.
+6.  create-element-type          → heroRow
+7.  create-element-type          → heroSettings
+8.  create-element-type          → servicesRow
+9.  create-element-type          → serviceCardItem
+10. create-data-type             → "Service Grid" (block list, references serviceCardItem)
+11. create-data-type             → "Main Content" (block list, references heroRow + servicesRow)
+12. create-document-type         → homePage (with mainContent property)
+
+    ── Template generation ──────────────────────────────────────────────────
+
+13. create-template              → master.cshtml
+                                   (full HTML with @RenderBody() where <main> was,
+                                    @await Html.PartialAsync for nav and footer)
+
+14. create-template              → homePage.cshtml
+                                   (Layout = "master.cshtml",
+                                    @inherits UmbracoViewPage<ContentModels.HomePage>,
+                                    @Html.GetBlockListHtml(Model.MainContent))
+
+    ── Structural partials ──────────────────────────────────────────────────
+
+15. create-partial-view          → Views/Partials/navigation.cshtml
+                                   (@inherits UmbracoViewPage + nav HTML)
+
+16. create-partial-view          → Views/Partials/footer.cshtml
+                                   (@inherits UmbracoViewPage + footer HTML)
+
+    ── Block list wiring ────────────────────────────────────────────────────
+
+17. create-partial-view          → Views/Partials/blocklist/default.cshtml
+                                   (fixed dispatcher: loops blocks →
+                                    @await Html.PartialAsync("blocklist/Components/" +
+                                    data.ContentType.Alias, block))
+
+    ── Block component partials ─────────────────────────────────────────────
+
+18. create-partial-view          → Views/Partials/blocklist/Components/heroRow.cshtml
+                                   (cast to HeroRow + HeroSettings, if (settings.Hide) return,
+                                    HTML with @row.Title, @Html.Raw(row.BodyText), etc.)
+
+19. create-partial-view          → Views/Partials/blocklist/Components/servicesRow.cshtml
+                                   (cast to ServicesRow, @Html.GetBlockListHtml(row.ServiceItems))
+
+20. create-partial-view          → Views/Partials/blocklist/Components/serviceCardItem.cshtml
+                                   (cast to ServiceCardItem, render icon/title/description)
+
+    ── Verification ─────────────────────────────────────────────────────────
+
+21. get-document-type            → verify heroRow ✓
+22. get-document-type            → verify servicesRow ✓
+23. get-data-type                → verify Main Content ✓
 ```
 
-**Generated `heroRow.cshtml`:**
+**Generated `homePage.cshtml`:**
 
 ```razor
-@using ContentModels = Umbraco.Cms.Web.Common.PublishedModels;
-@inherits Umbraco.Cms.Web.Common.Views.UmbracoViewPage<Umbraco.Cms.Core.Models.Blocks.BlockListItem>
+@using Umbraco.Cms.Web.Common.PublishedModels;
+@inherits Umbraco.Cms.Web.Common.Views.UmbracoViewPage<ContentModels.HomePage>
+    @using ContentModels = Umbraco.Cms.Web.Common.PublishedModels;
 @{
-    var content = Model.Content as ContentModels.HeroRow;
-    if (content == null) { return; }
+    Layout = "master.cshtml";
+}
+
+<main>
+    @Html.GetBlockListHtml(Model.MainContent)
+</main>
+```
+
+**Generated `master.cshtml`:**
+
+```razor
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <title>Acme</title>
+</head>
+<body>
+    @await Html.PartialAsync("~/Views/Partials/navigation.cshtml")
+
+    @RenderBody()
+
+    @await Html.PartialAsync("~/Views/Partials/footer.cshtml")
+</body>
+</html>
+```
+
+**Generated `Views/Partials/blocklist/default.cshtml`:**
+
+```razor
+@inherits Umbraco.Cms.Web.Common.Views.UmbracoViewPage<Umbraco.Cms.Core.Models.Blocks.BlockListModel>
+@{
+    if (Model?.Any() != true) { return; }
+}
+<div class="umb-block-list">
+    @foreach (var block in Model)
+    {
+        if (block?.ContentUdi == null) { continue; }
+        var data = block.Content;
+
+        @await Html.PartialAsync("blocklist/Components/" + data.ContentType.Alias, block)
+    }
+</div>
+```
+
+**Generated `Views/Partials/blocklist/Components/heroRow.cshtml`:**
+
+```razor
+@inherits Umbraco.Cms.Web.Common.Views.UmbracoViewPage<Umbraco.Cms.Core.Models.Blocks.BlockListItem>
+
+@{
+    var row = (HeroRow)Model.Content;
+    var settings = (HeroSettings)Model.Settings;
+
+    if (settings.Hide) { return; }
 }
 
 <section class="hero">
-    <h1>@content.Title</h1>
-    @Html.Raw(content.BodyText)
-    <img src="@Url.GetCropUrl(content.Image, 1920, 600)" alt="@content.Image?.Name" />
-    @if (content.Link != null)
+    <h1>@row.Title</h1>
+    @Html.Raw(row.BodyText)
+    <img src="@Url.GetCropUrl(row.Image, 1920, 600)" alt="@row.Image?.Name" />
+    @if (row.Link != null)
     {
-        <a href="@content.Link.Url" target="@content.Link.Target">@content.Link.Name</a>
+        <a href="@row.Link.Url" target="@row.Link.Target">@row.Link.Name</a>
     }
 </section>
 ```
