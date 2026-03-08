@@ -1,0 +1,14 @@
+{
+  "mcpServers": {
+    "umbraco-mcp": {
+      "command": "npx",
+      "args": ["@umbraco-cms/mcp-dev@17"],
+      "env": {
+        "UMBRACO_CLIENT_ID": "${UMBRACO_CLIENT_ID}",
+        "UMBRACO_CLIENT_SECRET": "${UMBRACO_CLIENT_SECRET}",
+        "UMBRACO_BASE_URL": "${UMBRACO_BASE_URL}",
+        "UMBRACO_INCLUDE_TOOL_COLLECTIONS": "document-type,data-type,template,partial-view,document"
+      }
+    }
+  }
+}
