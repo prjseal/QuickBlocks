@@ -7,9 +7,18 @@ description: >
   the Umbraco Developer MCP Server. Use when the developer wants to set up Umbraco
   block lists, create content types from an HTML file, scaffold a block-based page
   structure, or convert a prototype to Umbraco content types. Triggered by phrases
-  like "build the blocks", "scaffold this page", "create content types", or
-  "set up Umbraco from this HTML".
+  like "build the blocks", "scaffold this page", "create content types from this HTML",
+  "set up Umbraco blocks", or "convert this prototype to Umbraco". Do NOT use for
+  general Umbraco content editing, querying existing content, or non-block templates.
 user_invocable: true
+compatibility: >
+  Requires Umbraco 17+ with the Management API enabled. Requires the umbraco-mcp MCP
+  server connected (npx @umbraco-cms/mcp-dev@17). An Umbraco API User with admin
+  permissions must be configured. Use against a development or staging instance only.
+metadata:
+  mcp-server: umbraco-mcp
+  version: 1.0.0
+  author: QuickBlocks
 ---
 
 # Umbraco Block Builder
@@ -24,7 +33,7 @@ the MCP tools as your only write mechanism.
 
 ---
 
-## Ground Rules
+## Critical Rules
 
 These are non-negotiable. Do not proceed if any cannot be satisfied.
 
@@ -398,78 +407,10 @@ If any item shows an error, explain what failed and offer to retry or skip.
 
 ---
 
-## Worked Example
+## Reference: Worked Example
 
-**Input (unannotated HTML):**
+See `references/worked-example.md` for a complete end-to-end walkthrough:
+input HTML → proposed structure → full MCP call sequence → all generated Razor files.
 
-```html
-<main>
-  <section class="hero">
-    <h1>Welcome to Acme</h1>
-    <p>We build things that matter.</p>
-    <img src="hero.jpg" alt="Hero image">
-    <a href="/about">Learn More</a>
-  </section>
-
-  <section class="services">
-    <h2>Our Services</h2>
-    <div class="service-grid">
-      <div class="service-card">
-        <img src="icon.svg" alt="icon">
-        <h4>Service Name</h4>
-        <p>Service description here.</p>
-      </div>
-    </div>
-  </section>
-</main>
-```
-
-**Proposed structure (shown to developer before any writes):**
-
-```
-## Proposed Block Architecture
-
-**Page type:** Home Page (alias: homePage)
-
-**Block list:** Main Content
-  ├── Hero (element: heroRow)
-  │     title: Textstring
-  │     bodyText: Rich Text Editor
-  │     image: Image Media Picker
-  │     link: Single URL Picker
-  │   settings: heroSettings (hide: True/False)
-  │
-  └── Services (element: servicesRow)
-        title: Textstring
-        [nested list] Service Grid
-            Service Card (element: serviceCardItem)
-                icon: Image Media Picker
-                title: Textstring
-                description: Rich Text Editor
-      settings: none
-
-Does this look right? Reply YES to proceed, or tell me what to change.
-```
-
-**Generated `Views/Partials/blocklist/Components/heroRow.cshtml`:**
-
-```razor
-@inherits Umbraco.Cms.Web.Common.Views.UmbracoViewPage<Umbraco.Cms.Core.Models.Blocks.BlockListItem>
-
-@{
-    var row      = (HeroRow)Model.Content;
-    var settings = (HeroSettings)Model.Settings;
-
-    if (settings.Hide) { return; }
-}
-
-<section class="hero">
-    <h1>@row.Title</h1>
-    @Html.Raw(row.BodyText)
-    <img src="@Url.GetCropUrl(row.Image, 1920, 600)" alt="@row.Image?.Name" />
-    @if (row.Link != null)
-    {
-        <a href="@row.Link.Url" target="@row.Link.Target">@row.Link.Name</a>
-    }
-</section>
-```
+Consult it whenever you need to calibrate naming conventions, MCP call order, or
+the exact shape of a generated partial view.
